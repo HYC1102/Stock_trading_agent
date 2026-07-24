@@ -33,12 +33,24 @@ import atr_strategy as at
 
 # Universe grouped by character, so we can see WHERE the edge lives.
 UNIVERSE = {
-    "TSLA": "trend winner", "NVDA": "trend winner", "AAPL": "trend winner",
-    "AMZN": "trend winner", "MSFT": "trend winner",
-    "SPY": "index", "QQQ": "index",
-    "KO": "choppy/defensive", "XOM": "choppy/cyclical", "PFE": "choppy/defensive",
+    # trending / momentum names
+    "TSLA": "trend winner", "NVDA": "trend winner", "AVGO": "trend winner",
+    "AMD": "volatile", "NFLX": "volatile",
+    # mega-cap tech
+    "AAPL": "mega tech", "MSFT": "mega tech", "AMZN": "mega tech",
+    "GOOGL": "mega tech", "META": "mega tech",
+    # broad indices
+    "SPY": "index", "QQQ": "index", "IWM": "index",
+    # defensives / staples
+    "KO": "defensive", "PFE": "defensive", "JNJ": "defensive",
+    "PG": "defensive", "WMT": "defensive",
+    # cyclicals / energy / industrials
+    "XOM": "cyclical", "CVX": "cyclical", "CAT": "cyclical", "F": "cyclical",
+    # financials
+    "JPM": "financial", "GS": "financial", "BAC": "financial",
+    # laggards / blow-ups
     "INTC": "decliner", "T": "decliner", "BA": "decliner",
-    "DIS": "decliner", "PYPL": "blow-up", "NFLX": "volatile",
+    "DIS": "decliner", "PYPL": "blow-up",
 }
 PERIODS_PER_YEAR = 252
 
