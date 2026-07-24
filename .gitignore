@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+
+# generated backtest artifacts
+*.png
+sweep_results.csv
