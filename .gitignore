@@ -5,3 +5,5 @@ __pycache__/
 # generated backtest artifacts
 *.png
 sweep_results.csv
+basket_results.csv
+basket30_results.csv
