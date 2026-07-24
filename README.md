@@ -74,6 +74,37 @@ Key knobs: `--stop-mult` (stop distance in ATRs, default 2), `--risk-frac`
 1.0 = no leverage), `--atr-window` (default 20). The report compares the sized
 strategy against the base all-in Donchian on the same data.
 
+### Optional: trend filter (#4) and pyramiding (#5)
+
+Two opt-in extensions, both **off by default** so the results above are
+unchanged:
+
+- `--trend-ma 200` — only open longs when the close is above its 200-day SMA.
+- `--max-units 4 --pyramid-atr 0.5` — add a unit every 0.5 × ATR of advance
+  (Turtle-style), up to 4 units.
+
+```bash
+python atr_strategy.py --max-units 4 --pyramid-atr 0.5   # pyramiding on
+python atr_strategy.py --trend-ma 200                    # trend filter on
+```
+
+**What the data said** (basket of 16 names, per-trade risk held constant):
+
+| config | median CAGR | median Sharpe | median max DD |
+|--------|-------------|---------------|---------------|
+| baseline | 10.8% | 1.52 | −5.6% |
+| + pyramiding (#5) | **18.3%** | 1.37 | −13.0% |
+| + trend filter (#4) | 8.7% | 1.29 | −5.4% |
+
+- **Pyramiding (#5)** is a *profit lever*: it roughly doubled CAGR (≈10× total
+  return on TSLA) but proportionally increased volatility and drawdown and
+  slightly lowered Sharpe. Enable it if you want upside and can take the
+  drawdown; it does not improve risk-adjusted return.
+- **Trend filter (#4)** *hurt* on 15 of 16 names here. The ATR trailing stop
+  already handles downside, so a 200-day entry gate is redundant — it mainly
+  blocks good entries. Left in as an option, but **not recommended in this
+  configuration** (it may help in a variant without a tight ATR stop).
+
 Because vol-targeting scales the whole position linearly, `risk_frac` moves
 you *along* a fixed risk/return line (Sharpe stays constant until the leverage
 cap binds) — it sets how much risk you take, not the quality of the signal.

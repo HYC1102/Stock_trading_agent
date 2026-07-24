@@ -48,6 +48,9 @@ class AtrParams:
     risk_frac: float = 0.01    # equity risked per trade if stopped out
     max_weight: float = 1.0    # position cap (1.0 = fully invested, no leverage)
     cost_bps: float = 2.0
+    trend_ma: int = 0          # #4: only enter longs above this SMA (0 = off)
+    max_units: int = 1         # #5: pyramid up to this many units (1 = no pyramiding)
+    pyramid_atr: float = 0.5   # #5: add a unit every this-many ATRs of advance
 
 
 # --------------------------------------------------------------------------- #
@@ -57,13 +60,21 @@ def build_weights(df: pd.DataFrame, p: AtrParams) -> tuple[pd.Series, list[dict]
     """Walk the bars, producing a target-weight series and a trade log.
 
     ``target_weight[i]`` is the weight decided at the close of bar ``i`` (held
-    from the next bar's open). A trade holds ``weight`` from ``entry_i + 1``
-    through ``exit_i`` inclusive.
+    from the next bar's open). Options:
+
+      * Trend filter (#4): if ``trend_ma`` > 0, only open a long when the close
+        is above its ``trend_ma``-day SMA -- no counter-trend breakouts.
+      * Pyramiding (#5): if ``max_units`` > 1, add a unit each time price
+        advances another ``pyramid_atr`` * N (ATR fixed at initial entry, the
+        Turtle "N"), up to ``max_units``. Each unit adds ``per_unit_w`` weight,
+        capped at ``max_weight``. The whole stack exits together on the trailing
+        stop or the Donchian exit.
     """
     close = df["Close"].to_numpy()
     upper = df["entry_upper"].to_numpy()
     lower = df["exit_lower"].to_numpy()
     atr = df["atr"].to_numpy()
+    trend = df["trend_ma"].to_numpy()
     n = len(df)
 
     target = np.zeros(n)
@@ -71,42 +82,55 @@ def build_weights(df: pd.DataFrame, p: AtrParams) -> tuple[pd.Series, list[dict]
 
     in_pos = False
     entry_i = 0
-    weight = 0.0
-    highest = np.nan
+    entry_close = atr_entry = per_unit_w = next_add = highest = np.nan
+    units = 0
 
     def ready(i: int) -> bool:
         return not (np.isnan(upper[i]) or np.isnan(lower[i]) or np.isnan(atr[i]))
 
+    def trend_ok(i: int) -> bool:
+        return p.trend_ma <= 0 or (not np.isnan(trend[i]) and close[i] > trend[i])
+
     for i in range(n):
         if not in_pos:
-            if ready(i) and close[i] > upper[i]:
-                atr_frac = atr[i] / close[i]
-                weight = (
+            if ready(i) and close[i] > upper[i] and trend_ok(i):
+                atr_entry = atr[i]
+                atr_frac = atr_entry / close[i]
+                per_unit_w = (
                     min(p.max_weight, p.risk_frac / (p.stop_mult * atr_frac))
                     if atr_frac > 0 else p.max_weight
                 )
-                in_pos, entry_i, highest = True, i, close[i]
-                target[i] = weight
+                in_pos, entry_i, entry_close, highest = True, i, close[i], close[i]
+                units = 1
+                next_add = close[i] + p.pyramid_atr * atr_entry
+                target[i] = min(p.max_weight, per_unit_w * units)
             # else stays flat (target already 0)
         else:
             highest = max(highest, close[i])
+            # #5: add units as the trend extends (N fixed at entry).
+            while p.max_units > 1 and units < p.max_units and close[i] >= next_add:
+                units += 1
+                next_add += p.pyramid_atr * atr_entry
+
             stop_level = highest - p.stop_mult * atr[i]
             hit_stop = close[i] < stop_level
             hit_don = (not np.isnan(lower[i])) and close[i] < lower[i]
 
             if hit_stop or hit_don:
                 trades.append({
-                    "entry_i": entry_i, "exit_i": i, "weight": weight,
+                    "entry_i": entry_i, "exit_i": i, "units": units,
+                    "weight": min(p.max_weight, per_unit_w * units),
                     "reason": "stop" if hit_stop else "donchian",
                 })
-                in_pos, weight = False, 0.0
+                in_pos, units = False, 0
                 target[i] = 0.0
             else:
-                target[i] = weight
+                target[i] = min(p.max_weight, per_unit_w * units)
 
     if in_pos:  # still open on the last bar
-        trades.append({"entry_i": entry_i, "exit_i": n - 1,
-                       "weight": weight, "reason": "open"})
+        trades.append({"entry_i": entry_i, "exit_i": n - 1, "units": units,
+                       "weight": min(p.max_weight, per_unit_w * units),
+                       "reason": "open"})
 
     return pd.Series(target, index=df.index, name="target_weight"), trades
 
@@ -137,8 +161,12 @@ def backtest_atr(df: pd.DataFrame, p: AtrParams) -> dc.BacktestResult:
     if not trades.empty:
         metrics["pct_exit_stop"] = (trades["reason"] == "stop").mean()
         metrics["pct_exit_donchian"] = (trades["reason"] == "donchian").mean()
+        metrics["avg_units"] = trades["units"].mean()
+        metrics["max_units_hit"] = int(trades["units"].max())
     else:
         metrics["pct_exit_stop"] = metrics["pct_exit_donchian"] = np.nan
+        metrics["avg_units"] = np.nan
+        metrics["max_units_hit"] = 0
     return dc.BacktestResult(data=d, trades=trades, metrics=metrics)
 
 
@@ -164,6 +192,7 @@ def _trade_frame(d: pd.DataFrame, raw: list[dict]) -> pd.DataFrame:
             "entry_price": entry_px,
             "exit_price": exit_px,
             "weight": t["weight"],
+            "units": t.get("units", 1),
             "return_pct": (exit_px / entry_px - 1.0) * 100.0,
             "reason": t["reason"],
             "open": still_open,
@@ -184,6 +213,11 @@ def print_report(ticker: str, p: AtrParams, m: dict, base_m: dict) -> None:
     print(f"  Period            : {m['start']} -> {m['end']}  ({m['years']} yrs)")
     print(f"  Entry/Exit/ATR    : {p.entry} / {p.exit} / {p.atr_window}")
     print(f"  Stop / risk / cap : {p.stop_mult:.1f}N  /  {p.risk_frac*100:.1f}%  /  {p.max_weight:.2f}x")
+    trend_txt = f"{p.trend_ma}d SMA" if p.trend_ma > 0 else "off"
+    pyr_txt = (f"up to {p.max_units} units @ {p.pyramid_atr:.2f}N"
+               if p.max_units > 1 else "off")
+    print(f"  Trend filter (#4) : {trend_txt}")
+    print(f"  Pyramiding   (#5) : {pyr_txt}")
     print("-" * 60)
     print(f"  {'metric':<18}{'ATR sized':>14}{'base all-in':>16}")
     print("-" * 60)
@@ -201,6 +235,8 @@ def print_report(ticker: str, p: AtrParams, m: dict, base_m: dict) -> None:
     print(f"  {'# trades':<18}{m['n_trades']:>14}{base_m['n_trades']:>16}")
     print("-" * 60)
     print(f"  Avg position weight : {pct(m['avg_weight'])}")
+    if p.max_units > 1:
+        print(f"  Avg / max units     : {m['avg_units']:.2f} / {m['max_units_hit']}")
     print(f"  Exits via ATR stop  : {pct(m['pct_exit_stop'])}")
     print(f"  Exits via Donchian  : {pct(m['pct_exit_donchian'])}")
     print(f"  Buy & hold return   : {pct(m['buy_hold_return'])}")
@@ -252,6 +288,12 @@ def parse_args() -> argparse.Namespace:
                    help="Fraction of equity risked per trade.")
     p.add_argument("--max-weight", type=float, default=1.0,
                    help="Position cap (1.0 = no leverage).")
+    p.add_argument("--trend-ma", type=int, default=0,
+                   help="#4: only enter longs above this SMA (0 = off, e.g. 200).")
+    p.add_argument("--max-units", type=int, default=1,
+                   help="#5: pyramid up to this many units (1 = off, Turtle = 4).")
+    p.add_argument("--pyramid-atr", type=float, default=0.5,
+                   help="#5: add a unit every this-many ATRs of advance.")
     p.add_argument("--cost-bps", type=float, default=2.0)
     p.add_argument("--plot", action="store_true")
     p.add_argument("--plot-path", default="atr_strategy.png")
@@ -261,6 +303,10 @@ def parse_args() -> argparse.Namespace:
 def prepare(df: pd.DataFrame, p: AtrParams) -> pd.DataFrame:
     out = dc.donchian_channels(df, p.entry, p.exit)
     out["atr"] = dc.atr(df, p.atr_window)
+    out["trend_ma"] = (
+        df["Close"].rolling(p.trend_ma).mean() if p.trend_ma > 0
+        else pd.Series(np.nan, index=df.index)
+    )
     return out
 
 
@@ -270,6 +316,8 @@ def main() -> None:
         entry=args.entry, exit=args.exit, atr_window=args.atr_window,
         stop_mult=args.stop_mult, risk_frac=args.risk_frac,
         max_weight=args.max_weight, cost_bps=args.cost_bps,
+        trend_ma=args.trend_ma, max_units=args.max_units,
+        pyramid_atr=args.pyramid_atr,
     )
     raw = dc.load_data(args.ticker, args.start, args.end)
     df = prepare(raw, p)
@@ -290,8 +338,8 @@ def main() -> None:
         show["weight"] = show["weight"].round(3)
         show["return_pct"] = show["return_pct"].round(2)
         print("Last 6 trades:")
-        print(show[["entry_date", "exit_date", "weight", "return_pct", "reason"]]
-              .tail(6).to_string(index=False))
+        cols = ["entry_date", "exit_date", "weight", "units", "return_pct", "reason"]
+        print(show[cols].tail(6).to_string(index=False))
 
     if args.plot:
         plot_result(args.ticker, res, base, args.plot_path)
