@@ -78,6 +78,26 @@ Because vol-targeting scales the whole position linearly, `risk_frac` moves
 you *along* a fixed risk/return line (Sharpe stays constant until the leverage
 cap binds) — it sets how much risk you take, not the quality of the signal.
 
+## Cross-sectional / basket test (`basket.py`)
+
+Guards against the biggest overfitting risk: that the strategy only "works" on
+TSLA (a 100x trending outlier). Runs the **un-tuned** default 20/10 across a
+diverse 16-name universe — trending winners, indices, choppy cyclicals, and
+outright decliners — and compares each against buy & hold, plus an equal-weight
+basket curve. No parameter is tuned per name, so there is no data-snooping.
+
+```bash
+python basket.py --plot                    # base engine
+python basket.py --engine atr --plot       # ATR-sized version
+python basket.py --tickers SPY,KO,XOM,BA   # custom universe
+```
+
+On the default universe (2015–2026) the edge generalises: the strategy improved
+risk-adjusted return (Sharpe) on **16/16 names** and cut max drawdown on
+**16/16**, with the largest edges on decliners/choppy names — exactly where a
+trend filter should help by sidestepping large drawdowns. See caveats below re:
+the basket Sharpe (diversification is optimistic; correlations spike in crashes).
+
 ## Notes / caveats
 
 - Uses **split- and dividend-adjusted** prices (`auto_adjust=True`).
