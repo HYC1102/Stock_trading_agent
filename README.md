@@ -3,6 +3,15 @@
 A simple, single-stock **Donchian channel breakout** backtester (long-or-flat,
 "Turtle"-style). Tested on TSLA.
 
+> **Honest results note.** After fixing a one-day look-ahead bug in the return
+> calc (see `git log`), the single-stock breakout showed **no risk-adjusted edge**
+> — on 30 names it beat buy & hold's Sharpe on only 4/30, and the days it holds
+> long earn *less* than an average day. Its only real value is drawdown reduction.
+> The one approach whose honest numbers held up is the **diversified multi-asset
+> trend portfolio** (`trend_portfolio.py`) — not as a standalone winner, but as a
+> **diversifier**: adding 30% of it to a 60/40 lifted the blend's Sharpe from
+> 1.02 to 1.09 and cut max drawdown from -22% to -18%. See that section below.
+
 ## Strategy
 
 - **Donchian channel** = the highest high / lowest low over a lookback window.
@@ -128,6 +137,44 @@ risk-adjusted return (Sharpe) on **16/16 names** and cut max drawdown on
 **16/16**, with the largest edges on decliners/choppy names — exactly where a
 trend filter should help by sidestepping large drawdowns. See caveats below re:
 the basket Sharpe (diversification is optimistic; correlations spike in crashes).
+
+## Diversified trend portfolio (`trend_portfolio.py`) — the real-edge module
+
+The single-stock work established that the breakout signal has no standalone
+edge. Trend-following's documented value comes from **diversification across
+uncorrelated asset classes** (managed-futures style), so this module applies the
+same trend signal to a fixed universe of asset-class ETFs (equities, rates,
+credit, commodities, gold, FX, REITs), sized inverse-vol and scaled to a target
+portfolio volatility. ETFs rarely delist to zero, so the benchmark is far less
+survivorship-biased than a single-stock universe.
+
+```bash
+python trend_portfolio.py --plot                 # long-only, 50-day, 10% vol
+python trend_portfolio.py --long-short --channel 100
+```
+
+**Honest results (2010–2026, next-open fills):**
+
+| | Trend port | 60/40 | SPY |
+|---|--:|--:|--:|
+| CAGR | 9.1% | 9.8% | 14.1% |
+| Volatility | 10.6% | 9.6% | 16.5% |
+| Sharpe | 0.87 | 1.02 | 0.88 |
+| Max drawdown | −20% | −22% | −32% |
+
+Standalone it does **not** beat 60/40 — trend-following had a poor 2010s. Its
+value is as a **diversifier** (correlation ~0.5 to 60/40; it lost only −4.7% in
+2022 while 60/40 fell −15.7%). Adding it to a 60/40 improves the blend:
+
+| Blend | Sharpe | Max DD |
+|---|--:|--:|
+| 100% 60/40 | 1.02 | −22.3% |
+| 70% 60/40 + 30% trend | **1.09** | **−18.4%** |
+
+That ~0.07 Sharpe gain and 4-point drawdown reduction is modest but **real and
+defensible** — the only such result in this repo. Caveats: one regime (2010–26),
+a 15-ETF proxy for real managed futures, and the long/short variant did worse
+(Sharpe 0.53) as the short side bled in the bull market.
 
 ## Notes / caveats
 
