@@ -134,10 +134,14 @@ def backtest(
     d = df.copy()
     position = d["position"]
 
-    # Open-to-open return realised while holding the position set for that bar.
-    open_ret = d["Open"].pct_change().fillna(0.0)
-    d["market_ret"] = open_ret
-    gross = position * open_ret
+    # `position` is already decided at the close of the PRIOR bar (generate_positions
+    # shifts by one). We fill at the next open, so the return it earns is the FOLLOWING
+    # open-to-open move -- open_ret.shift(-1). Using open_ret directly would credit the
+    # signal bar's own move (a one-day look-ahead), so we shift it forward.
+    open_ret = d["Open"].pct_change()
+    exec_ret = open_ret.shift(-1).fillna(0.0)
+    d["market_ret"] = exec_ret
+    gross = position * exec_ret
 
     # Transaction costs charged when the position changes.
     turnover = position.diff().abs().fillna(position.abs())

@@ -142,16 +142,19 @@ def backtest_atr(df: pd.DataFrame, p: AtrParams) -> dc.BacktestResult:
     d = df.copy()
     target, raw_trades = build_weights(d, p)
 
-    # Execute next open: the weight held on bar t was decided at t-1.
+    # Execute next open: the weight held on bar t was decided at t-1. The return it
+    # earns is the FOLLOWING open-to-open move (open_ret.shift(-1)); using open_ret
+    # directly would credit the signal bar's own move -- a one-day look-ahead.
     held = target.shift(1).fillna(0.0)
     d["position"] = held
 
-    open_ret = d["Open"].pct_change().fillna(0.0)
-    d["market_ret"] = open_ret
+    open_ret = d["Open"].pct_change()
+    exec_ret = open_ret.shift(-1).fillna(0.0)
+    d["market_ret"] = exec_ret
     turnover = held.diff().abs().fillna(held.abs())
-    d["strategy_ret"] = held * open_ret - turnover * (p.cost_bps / 10_000.0)
+    d["strategy_ret"] = held * exec_ret - turnover * (p.cost_bps / 10_000.0)
     d["equity"] = (1.0 + d["strategy_ret"]).cumprod()
-    d["buy_hold"] = (1.0 + open_ret).cumprod()
+    d["buy_hold"] = (1.0 + exec_ret).cumprod()
 
     trades = _trade_frame(d, raw_trades)
     metrics = dc._compute_metrics(d, trades, periods_per_year=252)
