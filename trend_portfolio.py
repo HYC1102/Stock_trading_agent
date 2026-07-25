@@ -149,6 +149,64 @@ def run(SIG, CR, OR, AV, cfg):
                 contrib=(held * oret).sum(axis=0), turnover=turnover)
 
 
+def run_signal_only(SIG, OR, AV, cfg, capital=1.0):
+    """Signal-only (no rebalance): buy inverse-vol-sized at entry, hold the
+    position untouched as it drifts, sell only when the trend signal exits.
+
+    This is the DEFAULT. It trades far less than daily rebalancing and lets
+    winners run (rebalancing trims winners, which is anti-trend). No portfolio
+    vol-targeting -- exposure floats and never exceeds 100% (no leverage).
+    Returns the same keys as run(), plus a `trades` round-trip log and `equity`.
+    """
+    S = SIG.shift(1).fillna(0).to_numpy()                 # hold decided at prior close
+    R = OR.fillna(0.0).to_numpy()                         # honest next-open->next-open return
+    V = AV.to_numpy()
+    idx = SIG.index; assets = list(SIG.columns)
+    n, m = S.shape
+    cost = cfg["cost_bps"] / 10_000.0
+    budget = cfg.get("asset_budget", 0.028); capw = cfg.get("max_name", 0.25)
+
+    pos = np.zeros(m); cash = float(capital)
+    W = np.zeros((n, m)); eqarr = np.zeros(n); turn = np.zeros(n)
+    trades = []; opentr = {}
+    for t in range(n):
+        eq_open = cash + pos.sum()
+        for a in range(m):
+            want, have = S[t, a] > 0.5, pos[a] > 1e-12
+            if have and not want:                          # EXIT (sell all)
+                proceeds = pos[a] * (1 - cost); cash += proceeds; turn[t] += pos[a]
+                tr = opentr.pop(a)
+                trades.append(dict(asset=assets[a], entry_date=idx[tr["i"]], exit_date=idx[t],
+                                   entry=tr["spend"], exit=proceeds, pnl=proceeds - tr["spend"],
+                                   ret=(proceeds / tr["spend"] - 1) * 100,
+                                   days=(idx[t] - idx[tr["i"]]).days, open=False))
+                pos[a] = 0.0
+            elif want and not have:                        # ENTER (inverse-vol sized)
+                va = V[t, a]
+                w = 0.0 if (np.isnan(va) or va <= 0) else min(capw, budget / va)
+                spend = min(w * eq_open, cash)
+                if spend > 1e-9:
+                    pos[a] = spend * (1 - cost); cash -= spend; turn[t] += spend
+                    opentr[a] = dict(i=t, spend=spend)
+        pos = pos * (1 + np.nan_to_num(R[t]))              # positions drift, no rebalance
+        eqarr[t] = cash + pos.sum()
+        W[t] = pos / eqarr[t] if eqarr[t] > 0 else 0.0
+    for a, tr in opentr.items():                           # mark still-open trades to market
+        trades.append(dict(asset=assets[a], entry_date=idx[tr["i"]], exit_date=idx[-1],
+                           entry=tr["spend"], exit=pos[a], pnl=pos[a] - tr["spend"],
+                           ret=(pos[a] / tr["spend"] - 1) * 100,
+                           days=(idx[-1] - idx[tr["i"]]).days, open=True))
+
+    Wdf = pd.DataFrame(W, index=idx, columns=assets)
+    eq = pd.Series(eqarr, index=idx)
+    port_ret = eq.pct_change().fillna(eq.iloc[0] / capital - 1)
+    tdf = pd.DataFrame(trades)
+    contrib = (tdf.groupby("asset")["pnl"].sum() / capital) if not tdf.empty else pd.Series(dtype=float)
+    return dict(weights=Wdf, port_ret=port_ret, gross=Wdf.sum(axis=1), net=Wdf.sum(axis=1),
+                n_pos=(Wdf > 1e-9).sum(axis=1), contrib=contrib.reindex(assets).fillna(0),
+                turnover=pd.Series(turn, index=idx), trades=tdf, equity=eq)
+
+
 # --------------------------------------------------------------------------- #
 # Benchmarks
 # --------------------------------------------------------------------------- #
@@ -176,8 +234,12 @@ def print_report(res, cfg, bench6040, spy, classes):
     print("=" * 66)
     print(f"  Signal   : {cfg['channel']}-day Donchian breakout, "
           f"{'LONG/SHORT' if cfg['long_short'] else 'long-only'}")
-    print(f"  Sizing   : inverse-vol, target {cfg['target_vol']*100:.0f}% vol, "
-          f"max {cfg['max_gross']:.1f}x gross")
+    if "trades" in res:                                    # signal-only mode
+        print(f"  Sizing   : signal-only (buy at entry, hold, sell at exit); "
+              f"inverse-vol, no leverage")
+    else:
+        print(f"  Sizing   : daily-rebalanced inverse-vol, target "
+              f"{cfg['target_vol']*100:.0f}% vol, max {cfg['max_gross']:.1f}x gross")
     print("-" * 66)
     print(f"  {'':<16}{'Trend port':>12}{'60/40':>10}{'SPY':>10}")
     b1 = curve_stats(bench6040) if bench6040 is not None else None
@@ -255,6 +317,13 @@ def parse_args():
     p.add_argument("--asset-cap", type=float, default=2.0, help="Per-asset leverage cap.")
     p.add_argument("--vol-window", type=int, default=60)
     p.add_argument("--cost-bps", type=float, default=2.0)
+    p.add_argument("--rebalance", action="store_true",
+                   help="Use daily vol-targeted rebalancing instead of the default "
+                        "signal-only (buy at entry, hold, sell at exit) mode.")
+    p.add_argument("--asset-budget", type=float, default=0.028,
+                   help="Signal-only per-asset vol budget (entry size = budget / asset vol).")
+    p.add_argument("--max-name", type=float, default=0.25,
+                   help="Signal-only per-name weight cap at entry.")
     p.add_argument("--plot", action="store_true")
     p.add_argument("--plot-path", default="trend_portfolio.png")
     return p.parse_args()
@@ -267,11 +336,13 @@ def main():
     cfg = dict(channel=args.channel, long_short=args.long_short,
                target_vol=args.target_vol, max_gross=args.max_gross,
                asset_vol=args.asset_vol, asset_cap=args.asset_cap,
-               vol_window=args.vol_window, cost_bps=args.cost_bps)
+               vol_window=args.vol_window, cost_bps=args.cost_bps,
+               asset_budget=args.asset_budget, max_name=args.max_name)
 
-    print(f"Building diversified trend portfolio over {len(tickers)} assets...")
+    mode = "daily-rebalanced" if args.rebalance else "signal-only (no rebalance)"
+    print(f"Building diversified trend portfolio over {len(tickers)} assets [{mode}]...")
     SIG, CR, OR, AV, names = build_panels(tickers, args.start, args.end, cfg)
-    res = run(SIG, CR, OR, AV, cfg)
+    res = run(SIG, CR, OR, AV, cfg) if args.rebalance else run_signal_only(SIG, OR, AV, cfg)
     bench6040, spy = benchmark_6040(args.start, args.end, SIG.index)
 
     print_report(res, cfg, bench6040, spy, UNIVERSE)
