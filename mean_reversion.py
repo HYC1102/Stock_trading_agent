@@ -37,10 +37,12 @@ PPY = 252
 class MRParams:
     window: int = 20       # Bollinger MA / std window
     n_std: float = 2.0     # band width in std devs
-    max_hold: int = 10     # time-stop (bars)
+    max_hold: int = 0      # time-stop (bars); 0 = no time-stop (default)
     regime: bool = True    # only buy dips above the 200-day MA (default ON)
     regime_ma: int = 200
     stop_pct: float = 0.0  # optional hard stop-loss vs entry close (0 = off)
+    stop_atr: float = 2.0  # ATR stop: exit if close < entry - stop_atr*ATR (default 2N)
+    atr_window: int = 20
     cost_bps: float = 2.0
 
 
@@ -68,23 +70,28 @@ def generate_positions(df: pd.DataFrame, p: MRParams) -> pd.Series:
     lower = df["bb_lower"].to_numpy()
     mid = df["bb_mid"].to_numpy()
     ma = df["Close"].rolling(p.regime_ma).mean().to_numpy() if p.regime else None
+    atr = dc.atr(df, p.atr_window).to_numpy() if p.stop_atr > 0 else None
     n = len(df)
 
     state = np.zeros(n, dtype=int)
     in_pos = False
     held = 0
-    entry_ref = np.nan
+    entry_ref = atr_entry = np.nan
     for i in range(n):
         ready = not (np.isnan(lower[i]) or np.isnan(mid[i]))
         regime_ok = (not p.regime) or (ma is not None and not np.isnan(ma[i]) and close[i] > ma[i])
         if not in_pos:
             if ready and regime_ok and close[i] < lower[i]:
                 in_pos, held, entry_ref = True, 0, close[i]
+                atr_entry = atr[i] if atr is not None else np.nan
                 state[i] = 1
         else:
             held += 1
-            hit_stop = p.stop_pct > 0 and close[i] < entry_ref * (1 - p.stop_pct)
-            if close[i] > mid[i] or held >= p.max_hold or hit_stop:
+            hit_pct = p.stop_pct > 0 and close[i] < entry_ref * (1 - p.stop_pct)
+            hit_atr = (p.stop_atr > 0 and not np.isnan(atr_entry)
+                       and close[i] < entry_ref - p.stop_atr * atr_entry)
+            hit_time = p.max_hold > 0 and held >= p.max_hold
+            if close[i] > mid[i] or hit_time or hit_pct or hit_atr:
                 in_pos = False
                 state[i] = 0
             else:
@@ -158,7 +165,15 @@ def report(ticker: str, p: MRParams, m: dict) -> None:
     print(f"  BOLLINGER MEAN-REVERSION — {ticker}"
           f"   (regime filter: {'ON' if p.regime else 'off'})")
     print("=" * 58)
-    print(f"  Bands / hold      : {p.window}d, {p.n_std:.1f} std / max {p.max_hold}d hold")
+    exits = ["close > 20d MA (mean)"]
+    if p.stop_atr > 0:
+        exits.append(f"{p.stop_atr:.1f}xATR stop")
+    if p.max_hold > 0:
+        exits.append(f"{p.max_hold}d time-stop")
+    if p.stop_pct > 0:
+        exits.append(f"{p.stop_pct*100:.0f}% stop")
+    print(f"  Entry             : close < lower band ({p.window}d, {p.n_std:.1f} std)")
+    print(f"  Exit (first hit)  : {' | '.join(exits)}")
     print("-" * 58)
     print(f"  {'':<18}{'strategy':>12}{'buy & hold':>14}")
     print(f"  {'Total return':<18}{pct(m['total']):>12}{pct(m['bh_total']):>14}")
@@ -183,11 +198,14 @@ def parse_args():
     p.add_argument("--end", default=None)
     p.add_argument("--window", type=int, default=20)
     p.add_argument("--n-std", type=float, default=2.0)
-    p.add_argument("--max-hold", type=int, default=10)
+    p.add_argument("--max-hold", type=int, default=0,
+                   help="Time-stop in bars (0 = none, the default).")
     p.add_argument("--no-regime", action="store_true",
                    help="Disable the 200-day MA regime filter (default ON).")
     p.add_argument("--stop-pct", type=float, default=0.0,
-                   help="Hard stop-loss vs entry close, e.g. 0.05 = -5%% (0 = off).")
+                   help="Hard %% stop-loss vs entry close (0 = off).")
+    p.add_argument("--stop-atr", type=float, default=2.0,
+                   help="ATR stop multiple: exit if close < entry - N*ATR (default 2.0).")
     p.add_argument("--cost-bps", type=float, default=2.0)
     return p.parse_args()
 
@@ -202,7 +220,8 @@ def main():
     args = parse_args()
     raw = dc.load_data(args.ticker, args.start, args.end)
     p = MRParams(window=args.window, n_std=args.n_std, max_hold=args.max_hold,
-                 regime=not args.no_regime, stop_pct=args.stop_pct, cost_bps=args.cost_bps)
+                 regime=not args.no_regime, stop_pct=args.stop_pct, stop_atr=args.stop_atr,
+                 cost_bps=args.cost_bps)
     res = run_config(raw, p)
     report(args.ticker, p, res["metrics"])
 
