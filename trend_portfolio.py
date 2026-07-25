@@ -40,6 +40,9 @@ UNIVERSE = {
     "LQD": "IG credit", "HYG": "HY credit",
     "DBC": "Commodities", "GLD": "Gold", "SLV": "Silver", "USO": "Oil",
     "UUP": "US dollar", "VNQ": "REIT",
+    # strong-trending equity sectors (added by choice -- raise equity correlation
+    # slightly, so keep the count small; see git log for the sector-set analysis)
+    "SOXX": "Semiconductors", "XLK": "Tech sector", "XLE": "Energy sector",
 }
 
 
