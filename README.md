@@ -3,6 +3,18 @@
 A simple, single-stock **Donchian channel breakout** backtester (long-or-flat,
 "Turtle"-style). Tested on TSLA.
 
+> **Preferred single-stock strategy.** Basic Donchian (20/10) + a 2-ATR trailing
+> stop + 1% volatility-based sizing — i.e. the **default config of
+> `atr_strategy.py`**. Run it with:
+> ```bash
+> python atr_strategy.py --ticker TSLA          # or any symbol
+> ```
+> On TSLA (2015–2026, honest fills): **Sharpe 0.88, max drawdown −5.9%** vs
+> buy & hold's 0.74 / −75%. It is chosen as a **defensive drawdown-dampener**,
+> not an alpha source (see honest note below). At 1% risk it holds ~13% average
+> weight (CAGR 3.7%); scale `--risk-frac` to deploy more capital — the Sharpe is
+> unchanged by leverage, only the risk level moves.
+
 > **Honest results note.** After fixing a one-day look-ahead bug in the return
 > calc (see `git log`), the single-stock breakout showed **no risk-adjusted edge**
 > — on 30 names it beat buy & hold's Sharpe on only 4/30, and the days it holds
