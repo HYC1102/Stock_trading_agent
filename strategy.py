@@ -1,0 +1,252 @@
+"""
+40/40/20 diversified portfolio strategy.
+
+  * 40%  QQQ                 — US growth engine (held plain, no vol overlay)
+  * 40%  diversified trend   — managed-futures across 18 asset-class ETFs
+  * 20%  bonds (IEF)         — ballast
+
+Rebalanced with a 15% no-trade band: a position is only traded when its weight
+has drifted more than 15% from target (plus trend entries/exits always execute).
+Signals are decided on the close and filled at the next open (no look-ahead).
+
+This module is self-contained. Run `python strategy.py` for a summary, or import
+`current_state()` / `backtest()` (used by dashboard.py).
+"""
+
+from __future__ import annotations
+
+import argparse
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
+PPY = 252
+
+# The trend sleeve's universe: diversified asset-class ETFs.
+UNIVERSE = {
+    "SPY": "US equity", "QQQ": "US equity", "IWM": "US equity",
+    "EFA": "Intl equity", "EEM": "EM equity",
+    "TLT": "Long bond", "IEF": "Mid bond",
+    "LQD": "IG credit", "HYG": "HY credit",
+    "DBC": "Commodities", "GLD": "Gold", "SLV": "Silver", "USO": "Oil",
+    "UUP": "US dollar", "VNQ": "REIT",
+    "SOXX": "Semis", "XLK": "Tech sector", "XLE": "Energy sector",
+}
+
+CONFIG = dict(
+    qqq_w=0.40, trend_w=0.40, bond_w=0.20, bond_ticker="IEF",
+    band=0.15, channel=50, vol_window=60, asset_budget=0.028,
+    max_name=0.25, cost_bps=2.0, start="2010-01-01",
+)
+
+
+# --------------------------------------------------------------------------- #
+# Data
+# --------------------------------------------------------------------------- #
+def load_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFrame:
+    df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=True)
+    if df.empty:
+        raise ValueError(f"No data for {ticker!r}")
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    return df[["Open", "High", "Low", "Close"]].dropna()
+
+
+def build_panels(start: str, end: str | None = None):
+    """Return aligned (signal, next-open-return, trailing-vol, close) frames."""
+    sig, oret, vol, close = {}, {}, {}, {}
+    for t in UNIVERSE:
+        try:
+            raw = load_prices(t, start, end)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! {t}: skipped ({exc})")
+            continue
+        sig[t] = trend_signal(raw, CONFIG["channel"])
+        oret[t] = raw["Open"].pct_change().shift(-1)           # honest next-open fill
+        vol[t] = (raw["Close"].pct_change().rolling(CONFIG["vol_window"]).std()
+                  * np.sqrt(PPY)).shift(1)
+        close[t] = raw["Close"]
+    idx = sorted(set().union(*[s.index for s in oret.values()]))
+    return (pd.DataFrame(sig).reindex(idx), pd.DataFrame(oret).reindex(idx),
+            pd.DataFrame(vol).reindex(idx), pd.DataFrame(close).reindex(idx))
+
+
+# --------------------------------------------------------------------------- #
+# Signal + sleeves
+# --------------------------------------------------------------------------- #
+def trend_signal(raw: pd.DataFrame, channel: int) -> pd.Series:
+    """Long/flat 50-day Donchian breakout (long above the N-day high, out below
+    the N-day low)."""
+    hi = raw["High"].rolling(channel).max().shift(1).to_numpy()
+    lo = raw["Low"].rolling(channel).min().shift(1).to_numpy()
+    c = raw["Close"].to_numpy()
+    st = np.zeros(len(c)); pos = 0
+    for i in range(len(c)):
+        if not np.isnan(hi[i]) and c[i] > hi[i]:
+            pos = 1
+        elif not np.isnan(lo[i]) and c[i] < lo[i]:
+            pos = 0
+        st[i] = pos
+    return pd.Series(st, index=raw.index)
+
+
+def trend_sleeve(SIG, OR, AV) -> pd.DataFrame:
+    """Signal-only trend sleeve: buy inverse-vol-sized at a breakout, hold
+    untouched, sell at breakdown. Returns per-ETF weights (fraction of the
+    sleeve), no leverage."""
+    S = SIG.shift(1).fillna(0).to_numpy()
+    R = OR.fillna(0.0).to_numpy()
+    V = AV.to_numpy()
+    n, m = S.shape
+    cost = CONFIG["cost_bps"] / 1e4
+    budget, capw = CONFIG["asset_budget"], CONFIG["max_name"]
+    pos = np.zeros(m); cash = 1.0
+    W = np.zeros((n, m))
+    for t in range(n):
+        eq_open = cash + pos.sum()
+        for a in range(m):
+            want, have = S[t, a] > 0.5, pos[a] > 1e-12
+            if have and not want:
+                cash += pos[a] * (1 - cost); pos[a] = 0.0
+            elif want and not have:
+                va = V[t, a]
+                w = 0.0 if (np.isnan(va) or va <= 0) else min(capw, budget / va)
+                spend = min(w * eq_open, cash)
+                if spend > 1e-9:
+                    pos[a] = spend * (1 - cost); cash -= spend
+        pos = pos * (1 + np.nan_to_num(R[t]))
+        e = cash + pos.sum()
+        W[t] = pos / e if e > 0 else 0.0
+    return pd.DataFrame(W, index=SIG.index, columns=SIG.columns)
+
+
+def net_targets(SIG, OR, AV) -> pd.DataFrame:
+    """Combined per-ETF target weights: 40% QQQ + 40% trend + 20% bonds."""
+    TW = trend_sleeve(SIG, OR, AV)
+    NET = CONFIG["trend_w"] * TW
+    NET["QQQ"] = NET["QQQ"] + CONFIG["qqq_w"]
+    NET[CONFIG["bond_ticker"]] = NET[CONFIG["bond_ticker"]] + CONFIG["bond_w"]
+    return NET
+
+
+# --------------------------------------------------------------------------- #
+# Backtest with the no-trade band
+# --------------------------------------------------------------------------- #
+def backtest(NET, OR, capital=23_000.0, band=None):
+    band = CONFIG["band"] if band is None else band
+    idx = NET.index
+    tickers = [t for t in NET.columns if NET[t].abs().max() > 1e-4]
+    RET = OR.reindex(idx).fillna(0.0)
+    pos = {t: NET[t].iloc[0] * capital for t in tickers}
+    cash = capital - sum(pos.values())
+    eqs = [capital]; trades = []; gross = [sum(abs(v) for v in pos.values())]
+    for i in range(1, len(idx)):
+        for t in tickers:
+            pos[t] *= (1 + RET[t].iloc[i])
+        equity = sum(pos.values()) + cash
+        for t in tickers:
+            tgt = NET[t].iloc[i] * equity; cur = pos[t]
+            opening = tgt > 1e-6 * equity and cur <= 1e-6 * equity
+            closing = tgt <= 1e-6 * equity and cur > 1e-6 * equity
+            rel = abs(cur - tgt) / tgt if tgt > 1e-6 * equity else (9 if cur > 1e-6 * equity else 0)
+            if opening or closing or rel > band:
+                trades.append(dict(date=idx[i], ticker=t, delta=tgt - cur,
+                                   target=tgt, equity=equity))
+                cash += cur - tgt; pos[t] = tgt
+        eqs.append(sum(pos.values()) + cash)
+        gross.append(sum(v for v in pos.values() if v > 0) / (sum(pos.values()) + cash))
+    eq = pd.Series(eqs, index=idx)
+    return dict(equity=eq, trades=pd.DataFrame(trades), positions=pos, cash=cash,
+                tickers=tickers, gross=pd.Series(gross, index=idx))
+
+
+# --------------------------------------------------------------------------- #
+# Current state (for the dashboard)
+# --------------------------------------------------------------------------- #
+def metrics(eq: pd.Series) -> dict:
+    r = eq.pct_change().dropna(); ny = len(r) / PPY
+    dd = eq / eq.cummax() - 1
+    return dict(cagr=(eq.iloc[-1] / eq.iloc[0]) ** (1 / ny) - 1,
+                sharpe=r.mean() / r.std() * np.sqrt(PPY) if r.std() > 0 else np.nan,
+                vol=r.std() * np.sqrt(PPY), maxdd=dd.min(), cur_dd=dd.iloc[-1],
+                total=eq.iloc[-1] / eq.iloc[0] - 1)
+
+
+def current_state(capital=23_000.0, start=None, end=None):
+    """Everything the dashboard needs: target book, latest trades, exposure."""
+    start = start or CONFIG["start"]
+    SIG, OR, AV, CLOSE = build_panels(start, end)
+    NET = net_targets(SIG, OR, AV)
+    res = backtest(NET, OR, capital=capital)
+    eq = res["equity"]; last = NET.index[-1]
+
+    # target book (what to hold now) at the latest close
+    tgt = (NET.loc[last] * capital)
+    book = tgt[tgt > capital * 0.001].sort_values(ascending=False)
+
+    # most recent rebalancing day, scaled to the user's capital
+    tdf = res["trades"].copy()
+    if not tdf.empty:
+        tdf["pct"] = tdf["delta"] / tdf["equity"]              # trade as % of portfolio
+        tdf["scaled"] = tdf["pct"] * capital                   # $ on the user's capital
+        latest_trades = tdf[tdf["date"] == tdf["date"].max()]
+    else:
+        latest_trades = tdf
+
+    # asset-class exposure from the target weights
+    cls = {}
+    for t, w in NET.loc[last].items():
+        if abs(w) > 1e-4:
+            cls[UNIVERSE.get(t, "?")] = cls.get(UNIVERSE.get(t, "?"), 0) + w
+    cls = dict(sorted(cls.items(), key=lambda x: -x[1]))
+
+    # SPY correlation
+    try:
+        spy = load_prices("SPY", start, end)["Open"].pct_change().shift(-1).reindex(eq.index)
+        corr = pd.DataFrame({"p": eq.pct_change(), "s": spy}).dropna().corr().iloc[0, 1]
+    except Exception:  # noqa: BLE001
+        corr = np.nan
+
+    return dict(
+        asof=last, capital=capital, equity=eq, book=book, trades=latest_trades,
+        sleeves={"QQQ (growth)": CONFIG["qqq_w"], "Trend (diversifier)": CONFIG["trend_w"],
+                 "Bonds (ballast)": CONFIG["bond_w"]},
+        asset_class=cls, gross=res["gross"].iloc[-1], corr_spy=corr,
+        metrics=metrics(eq), universe=UNIVERSE, config=CONFIG,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# CLI summary
+# --------------------------------------------------------------------------- #
+def main():
+    p = argparse.ArgumentParser(description="40/40/20 diversified strategy.")
+    p.add_argument("--capital", type=float, default=23_000.0)
+    p.add_argument("--start", default=CONFIG["start"])
+    args = p.parse_args()
+
+    s = current_state(capital=args.capital, start=args.start)
+    m = s["metrics"]
+    print(f"\n40/40/20 strategy — as of {s['asof'].date()}  (${args.capital:,.0f})")
+    print("=" * 56)
+    print(f"  CAGR {m['cagr']*100:.1f}%   Sharpe {m['sharpe']:.2f}   "
+          f"MaxDD {m['maxdd']*100:.1f}%   corr(SPY) {s['corr_spy']:.2f}")
+    print(f"  Value: ${s['equity'].iloc[-1]:,.0f}   current drawdown {m['cur_dd']*100:.1f}%")
+    print("\n  TARGET BOOK (hold now):")
+    for t, v in s["book"].items():
+        print(f"    {t:<6} ${v:>8,.0f}  ({v/args.capital*100:4.1f}%)")
+    print("\n  ASSET-CLASS MIX:")
+    for c, w in s["asset_class"].items():
+        print(f"    {c:<14} {w*100:4.1f}%")
+    if not s["trades"].empty:
+        print(f"\n  MOST RECENT REBALANCE ({s['trades']['date'].iloc[0].date()}) "
+              f"— scaled to ${args.capital:,.0f}:")
+        for _, r in s["trades"].iterrows():
+            print(f"    {'BUY ' if r['delta']>0 else 'SELL'} {r['ticker']:<6} "
+                  f"${abs(r['scaled']):,.0f}  ({r['pct']*100:+.1f}%)")
+    print("=" * 56 + "\n")
+
+
+if __name__ == "__main__":
+    main()

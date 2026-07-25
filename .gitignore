@@ -7,3 +7,7 @@ __pycache__/
 sweep_results.csv
 basket_results.csv
 basket30_results.csv
+
+# cached price data
+data/
+dashboard.html
