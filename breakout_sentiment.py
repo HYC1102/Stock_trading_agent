@@ -43,8 +43,9 @@ CONFIG = dict(
     use_exit_low=True,      # enable the N-day-low exit
     pct_stop=None,          # hard stop: exit if price <= entry*(1-pct_stop) (None = off)
     slots=3,                # concurrent positions
-    sizing="full",          # "risk" = ATR risk-sized (leaves cash) | "full" = capital-allocated
-    weight_mode="fixed",    # "fixed" = 1/slots each (cash in empty slots) | "equal" = 1/held | "invvol"
+    sizing="slots",         # "slots" = independent 1/N slots, no rebalancing (default)
+                            # | "full" = re-equalize whole book each change | "risk" = ATR risk-sized
+    weight_mode="fixed",    # (full mode only) "fixed"=1/slots each | "equal"=1/held | "invvol"
     risk_frac=0.01,         # capital risked per slot to its stop (sizing="risk" only)
     regime=True,            # only OPEN positions when SPY > its 200-day MA
     regime_ma=200,
@@ -402,23 +403,26 @@ def backtest(prices=None, capital=None, P=None, regime_full=None,
                     else:
                         pos.pop(t, None)
                 pend_tgt = None
-        else:                                            # risk-sized
-            for t in pend_sell:
+        else:                                            # independent slots ("slots" / "risk")
+            for t in pend_sell:                          # a slot's stock exits -> full sell
                 if t in pos and np.isfinite(op.get(t, np.nan)):
                     sh = pos[t]["shares"]; val = sh * op[t]
                     cash += val * (1 - cost)
                     trades.append(dict(date=day, ticker=t, side="SELL", px=float(op[t]),
                                        shares=sh, value=val))
                     del pos[t]
-            for o in pend_buy:
+            for o in pend_buy:                           # freed slot's cash buys the next breakout
                 t = o["ticker"]
                 if t in pos or len(pos) >= CONFIG["slots"]:
                     continue
                 price = op.get(t, np.nan)
                 if not np.isfinite(price) or price <= 0:
                     continue
-                shares = (CONFIG["risk_frac"] * o["equity"]) / (stop_k * o["atr"])
-                budget = min(shares * price, cash / (1 + cost))     # no leverage
+                if sizing == "slots":                    # 1/N of equity, capped by available cash
+                    budget = min(o["equity"] / CONFIG["slots"], cash / (1 + cost))
+                else:                                    # ATR risk-sized
+                    budget = min((CONFIG["risk_frac"] * o["equity"]) / (stop_k * o["atr"]) * price,
+                                 cash / (1 + cost))
                 shares = budget / price
                 if shares <= 0:
                     continue

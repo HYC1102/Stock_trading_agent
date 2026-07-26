@@ -1,0 +1,72 @@
+name: Daily paper trade
+
+# Advances the breakout forward paper-trade once per trading day, commits the
+# updated log back to the repo, and publishes both dashboards to GitHub Pages.
+on:
+  schedule:
+    - cron: '30 22 * * 1-5'      # 22:30 UTC (~6:30pm ET), Mon-Fri (after the US close)
+  workflow_dispatch: {}           # manual "Run workflow" button, for testing
+
+permissions:
+  contents: write                 # commit the updated paper-trade state back
+  pages: write                    # publish the dashboards
+  id-token: write
+
+concurrency:
+  group: paper-trade
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Advance the paper account (breakout forward test)
+        run: python breakout_dashboard.py --capital 8800
+
+      - name: Rebuild the 40/40/20 portfolio dashboard (non-fatal)
+        run: python dashboard.py --capital 23000 || echo "portfolio dashboard skipped"
+
+      - name: Commit the forward-test log
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in data/paper_breakout.json data/paper_trades.csv data/paper_equity.csv; do
+            [ -f "$f" ] && git add "$f"
+          done
+          if git diff --cached --quiet; then
+            echo "No paper-state changes to commit."
+          else
+            git commit -m "Paper trade update $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          for f in index.html dashboard.html breakout_dashboard.html; do
+            [ -f "$f" ] && cp "$f" _site/
+          done
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: run
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

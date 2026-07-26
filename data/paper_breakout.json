@@ -1,0 +1,35 @@
+{
+  "start_date": "2026-07-27",
+  "capital": 8800.0,
+  "cash": 8800.0,
+  "positions": {},
+  "trades": [],
+  "equity": [],
+  "pending": [
+    {
+      "side": "BUY",
+      "ticker": "TRV",
+      "price_hint": 387.26,
+      "momentum": 100.0,
+      "sentiment": 62.5,
+      "combined": 85.0
+    },
+    {
+      "side": "BUY",
+      "ticker": "WELL",
+      "price_hint": 252.07,
+      "momentum": 90.9,
+      "sentiment": 68.2,
+      "combined": 81.8
+    },
+    {
+      "side": "BUY",
+      "ticker": "HWM",
+      "price_hint": 289.26,
+      "momentum": 81.8,
+      "sentiment": 61.5,
+      "combined": 73.7
+    }
+  ],
+  "last_close": null
+}

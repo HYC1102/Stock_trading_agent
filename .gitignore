@@ -8,7 +8,9 @@ sweep_results.csv
 basket_results.csv
 basket30_results.csv
 
-# cached price data
-data/
+# cached price data, but KEEP the forward paper-trade log (committed by CI)
+data/*.pkl
+data/cron.log
+_site/
 dashboard.html
 breakout_dashboard.html
