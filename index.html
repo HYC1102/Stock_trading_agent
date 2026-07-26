@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>My Strategy Dashboards</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fbfbfa}
+.nav{display:flex;gap:8px;align-items:center;padding:10px 16px;background:#fff;
+border-bottom:1px solid #e6e4dd;position:sticky;top:0;z-index:2}
+.brand{font-weight:600;font-size:14px;margin-right:14px;color:#1a1a19}
+.tab{cursor:pointer;font-size:13px;font-weight:500;padding:7px 14px;border-radius:8px;
+border:1px solid #e6e4dd;background:transparent;color:#6b6a66}
+.tab.on{background:#2a78d6;color:#fff;border-color:#2a78d6}
+.date{margin-left:auto;font-size:12px;color:#6b6a66}
+iframe{width:100%;border:0;display:block;height:calc(100vh - 53px)}
+</style></head><body>
+<div class="nav">
+  <span class="brand">My Strategies</span>
+  <button class="tab on" id="t-port" onclick="show('port')">40 / 40 / 20 Portfolio</button>
+  <button class="tab" id="t-brk" onclick="show('brk')">Breakout Momentum</button>
+  <span class="date" id="d"></span>
+</div>
+<iframe id="frame" src="dashboard.html" title="dashboard"></iframe>
+<script>
+function show(w){
+  document.getElementById('frame').src = w==='port' ? 'dashboard.html' : 'breakout_dashboard.html';
+  document.getElementById('t-port').classList.toggle('on', w==='port');
+  document.getElementById('t-brk').classList.toggle('on', w==='brk');
+}
+document.getElementById('d').textContent = new Date().toDateString();
+</script></body></html>

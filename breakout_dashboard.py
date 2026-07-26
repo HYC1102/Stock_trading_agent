@@ -1,0 +1,302 @@
+"""
+Live dashboard for the breakout / 3-slot swing strategy (separate from the
+40/40/20 portfolio dashboard). Drives off the forward paper-trading state in
+paper_trade.py (data/paper_breakout.json) so it tracks a genuine forward record:
+
+  * Today's actions  orders to place at the next open (exits + sentiment-ranked buys)
+  * Breakouts today  ranked by a MOMENTUM index + news SENTIMENT (combined)
+  * Positions        current book with live stop trigger + cushion
+  * Trades           the full forward log (with the sentiment captured at entry)
+  * Measures         return / Sharpe / drawdown / win rate since the start date
+
+Generates breakout_dashboard.html. Run daily to advance the paper account.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
+import breakout_sentiment as bs
+import paper_trade as pt
+
+CSS = """
+:root{--bg:#fbfbfa;--card:#fff;--ink:#1a1a19;--mut:#6b6a66;--line:#e6e4dd;
+--blue:#2a78d6;--green:#1baf7a;--amber:#c98500;--red:#c0392b}
+*{box-sizing:border-box;margin:0}
+.dash{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);
+color:var(--ink);padding:28px;line-height:1.5;max-width:960px;margin:0 auto}
+h1{font-size:22px;font-weight:600}h2{font-size:16px;font-weight:600;margin:26px 0 12px}
+.sub{color:var(--mut);font-size:13px;margin-top:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card .l{font-size:12px;color:var(--mut)}.card .v{font-size:21px;font-weight:600;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);
+border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--mut);font-weight:500;background:#f6f5f1}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.buy{color:var(--green);font-weight:600}.sell{color:var(--red);font-weight:600}
+.pos{color:var(--green)}.neg{color:var(--red)}.amber{color:var(--amber)}
+.hold{background:#eef7f2}
+.pill{display:inline-block;background:#eef4fb;color:var(--blue);font-size:12px;padding:2px 9px;border-radius:20px}
+.tag{font-size:11px;color:var(--amber);background:#fdf6e9;padding:1px 7px;border-radius:10px}
+.act{background:#f2f7fd;border:1px solid #d7e6f7;border-radius:10px;padding:14px 16px;margin:14px 0}
+.foot{color:var(--mut);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+"""
+
+
+def episodes(trades):
+    """Closed round-trips from the trade log (for win rate / avg hold)."""
+    ep, closed = {}, []
+    for t in sorted(trades, key=lambda x: x["date"]):
+        e = ep.setdefault(t["ticker"], dict(cost=0.0, proceeds=0.0, shares=0.0,
+                                            entry=t["date"], exit=t["date"]))
+        if t["side"] == "BUY":
+            e["cost"] += t["value"]; e["shares"] += t["shares"]
+        else:
+            e["proceeds"] += t["value"]; e["shares"] -= t["shares"]; e["exit"] = t["date"]
+        if e["shares"] <= 1e-6 and e["cost"] > 0:
+            closed.append(dict(ticker=t["ticker"], pnl=e["proceeds"] - e["cost"],
+                               entry=e["entry"], exit=e["exit"]))
+            del ep[t["ticker"]]
+    return closed
+
+
+def build(capital: float, start: str):
+    bs.CONFIG.update(sizing="slots", slots=3, regime=True, rank_mode="proxy",
+                     atr_stop=1.5, exit_low=10, use_exit_low=True, pct_stop=None,
+                     take_profit=None, time_stop=None, universe_size=223,
+                     rebuild="W", pool="broad")
+
+    prices = bs.download_prices(bs.broad_universe(), period="3y")
+    P = bs.build_panels(prices)
+    regime = bs.spy_regime(P["close"].index)
+
+    st = pt.load_state() or pt.init_state(start, capital)
+    st, asof = pt.advance(st, prices, P, regime)
+    pt.save_state(st)
+
+    started = len(st["equity"]) > 0
+    value = st["equity"][-1]["value"] if started else st["capital"]
+
+    # positions with live stop + cushion
+    positions = []
+    for tk, p in st["positions"].items():
+        px = float(P["close"].loc[asof, tk])
+        stop, rule = pt.stop_level(p, tk, prices)
+        positions.append(dict(ticker=tk, shares=p["shares"], entry=p["entry"],
+                              entry_date=p["entry_date"], price=px, value=p["shares"] * px,
+                              ret=px / p["entry"] - 1, stop=stop, stop_rule=rule,
+                              room=px / stop - 1 if stop > 0 else 0))
+    positions.sort(key=lambda x: -x["value"])
+
+    # measures from the forward equity log
+    m = dict(ret=0.0, sharpe=float("nan"), maxdd=0.0, vol=float("nan"),
+             win=float("nan"), avg_hold=float("nan"), n_closed=0)
+    if started:
+        eq = pd.Series([e["value"] for e in st["equity"]],
+                       index=pd.to_datetime([e["date"] for e in st["equity"]]))
+        r = eq.pct_change().dropna()
+        closed = episodes(st["trades"])
+        wins = [c for c in closed if c["pnl"] > 0]
+        m = dict(ret=value / st["capital"] - 1,
+                 sharpe=(r.mean() / r.std() * np.sqrt(252)) if len(r) > 1 and r.std() else float("nan"),
+                 vol=r.std() * np.sqrt(252) if len(r) > 1 else float("nan"),
+                 maxdd=(eq / eq.cummax() - 1).min(),
+                 win=len(wins) / len(closed) if closed else float("nan"),
+                 avg_hold=np.mean([(pd.Timestamp(c["exit"]) - pd.Timestamp(c["entry"])).days
+                                   for c in closed]) if closed else float("nan"),
+                 n_closed=len(closed))
+
+    cand = bs.rank_breakouts(prices, bs.build_universe(prices))
+    return dict(capital=st["capital"], start=st["start_date"], asof=asof, started=started,
+                value=value, positions=positions, pending=st["pending"], trades=st["trades"],
+                equity=st["equity"], cand=cand, m=m)
+
+
+def html(s) -> str:
+    cap, m = s["capital"], s["m"]
+    rc = lambda x: "pos" if x >= 0 else "neg"
+    roomcls = lambda r: "neg" if r < 0.03 else ("amber" if r < 0.08 else "pos")
+    start_d = dt.date.fromisoformat(s["start"])
+
+    # header cards
+    if s["started"]:
+        cards = [("Account value", f"${s['value']:,.0f}"), ("Return", f"{m['ret']*100:+.1f}%"),
+                 ("Sharpe", f"{m['sharpe']:.2f}" if np.isfinite(m['sharpe']) else "—"),
+                 ("Max drawdown", f"{m['maxdd']*100:.0f}%"),
+                 ("Win rate", f"{m['win']*100:.0f}%" if np.isfinite(m['win']) else "—")]
+        status = f"as of {s['asof']:%d %b %Y}"
+    else:
+        cards = [("Starting capital", f"${cap:,.0f}"), ("Status", "starts tomorrow"),
+                 ("Start date", f"{start_d:%d %b}")]
+        status = f"forward test begins {start_d:%A %d %b %Y}"
+
+    cards_html = "".join(f'<div class="card"><div class="l">{l}</div><div class="v">{v}</div></div>'
+                         for l, v in cards)
+
+    # TODAY'S ACTIONS (top)
+    pend = s["pending"]
+    if pend:
+        rows = ""
+        for o in pend:
+            if o["side"] == "SELL":
+                rows += (f'<tr><td class="sell">SELL</td><td><b>{o["ticker"]}</b></td>'
+                         f'<td colspan="4" style="color:var(--mut)">exit — {o.get("reason","")}</td></tr>')
+            else:
+                rows += (f'<tr><td class="buy">BUY</td><td><b>{o["ticker"]}</b></td>'
+                         f'<td class="n">~${o.get("price_hint",0):,.2f}</td>'
+                         f'<td class="n">{o.get("momentum","")}</td>'
+                         f'<td class="n">{o.get("sentiment","")}</td>'
+                         f'<td class="n"><b>{o.get("combined","")}</b></td></tr>')
+        when = "at the open on " + (f"{start_d:%a %d %b}" if not s["started"] else "the next session")
+        actions = (f'<div class="act"><b>Today&rsquo;s actions</b> &mdash; place {when}:'
+                   f'<table style="margin-top:8px"><tr><th>Action</th><th>Ticker</th>'
+                   f'<th class="n">~Price</th><th class="n">Mom</th><th class="n">Sent</th>'
+                   f'<th class="n">Combined</th></tr>{rows}</table></div>')
+    else:
+        actions = ('<div class="act"><b>Today&rsquo;s actions</b> &mdash; none. '
+                   'Hold current positions; no qualifying breakouts (or risk-off regime).</div>')
+
+    # today's breakouts
+    c = s["cand"]
+    if len(c):
+        held = {p["ticker"] for p in s["positions"]}
+        crows = ""
+        for i, r in c.head(15).iterrows():
+            tag = ' <span class="tag" style="color:var(--green);background:#eef7f2">top pick</span>' if i < 3 else ""
+            if r.ticker in held:
+                tag = ' <span class="tag">held</span>'
+            cls = ' class="hold"' if r.ticker in held else ""
+            crows += (f'<tr{cls}><td>{i+1}</td><td><b>{r.ticker}</b>{tag}</td>'
+                      f'<td class="n">${r.close:,.2f}</td><td class="n">{r.mom_ret*100:+.0f}%</td>'
+                      f'<td class="n">{r.momentum:.0f}</td><td class="n">{r.sentiment:.0f}</td>'
+                      f'<td class="n"><b>{r.combined:.0f}</b></td><td class="n">${r.stop:,.2f}</td></tr>')
+        cand_html = (f'<table><tr><th>#</th><th>Ticker</th><th class="n">Price</th>'
+                     f'<th class="n">3-mo mom</th><th class="n">Momentum idx</th>'
+                     f'<th class="n">Sentiment</th><th class="n">Combined</th>'
+                     f'<th class="n">ATR stop</th></tr>{crows}</table>')
+    else:
+        cand_html = '<p class="sub">No fresh breakouts in the universe today.</p>'
+
+    # positions
+    if s["positions"]:
+        prows = "".join(
+            f'<tr><td><b>{p["ticker"]}</b></td><td class="n">{p["shares"]:.1f}</td>'
+            f'<td class="n">${p["entry"]:,.2f}</td><td class="n">${p["price"]:,.2f}</td>'
+            f'<td class="n">${p["stop"]:,.2f}<br><span style="font-size:10px;color:var(--mut)">{p["stop_rule"]}</span></td>'
+            f'<td class="n {roomcls(p["room"])}">{p["room"]*100:+.1f}%</td>'
+            f'<td class="n">${p["value"]:,.0f}</td>'
+            f'<td class="n {rc(p["ret"])}">{p["ret"]*100:+.1f}%</td></tr>' for p in s["positions"])
+        pos_html = (f'<table><tr><th>Ticker</th><th class="n">Shares</th><th class="n">Entry</th>'
+                    f'<th class="n">Price</th><th class="n">Stop</th><th class="n">Room</th>'
+                    f'<th class="n">Value</th><th class="n">P&L</th></tr>{prows}</table>')
+    else:
+        pos_html = '<p class="sub">No open positions yet.</p>'
+
+    # trade log (most recent first) with sentiment
+    if s["trades"]:
+        trows = ""
+        for t in sorted(s["trades"], key=lambda x: x["date"], reverse=True)[:20]:
+            sent = t.get("sentiment", "")
+            trows += (f'<tr><td>{t["date"]}</td>'
+                      f'<td class="{"buy" if t["side"]=="BUY" else "sell"}">{t["side"]}</td>'
+                      f'<td><b>{t["ticker"]}</b></td><td class="n">{t["shares"]:.1f}</td>'
+                      f'<td class="n">${t["price"]:,.2f}</td><td class="n">${t["value"]:,.0f}</td>'
+                      f'<td class="n">{sent if sent not in (None,"") else "&mdash;"}</td>'
+                      f'<td style="color:var(--mut)">{t.get("reason","")}</td></tr>')
+        trades_html = (f'<table><tr><th>Date</th><th>Action</th><th>Ticker</th><th class="n">Shares</th>'
+                       f'<th class="n">Price</th><th class="n">$ value</th><th class="n">Sent</th>'
+                       f'<th>Note</th></tr>{trows}</table>')
+    else:
+        trades_html = '<p class="sub">No trades yet — the log fills from the first session.</p>'
+
+    # equity chart (once there is a track record)
+    chart = ""
+    if len(s["equity"]) >= 2:
+        ed = json.dumps([e["date"][5:] for e in s["equity"]])
+        ev = json.dumps([e["value"] for e in s["equity"]])
+        chart = (f'<div style="position:relative;height:220px"><canvas id="eq"></canvas></div>'
+                 f'<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>'
+                 f'<script>new Chart(document.getElementById("eq"),{{type:"line",'
+                 f'data:{{labels:{ed},datasets:[{{label:"Account",data:{ev},borderColor:"#2a78d6",'
+                 f'borderWidth:2,pointRadius:0,tension:.1}}]}},options:{{responsive:true,'
+                 f'maintainAspectRatio:false,plugins:{{legend:{{display:false}}}},'
+                 f'scales:{{y:{{ticks:{{callback:v=>"$"+(v/1000).toFixed(1)+"k"}}}}}}}}}});</script>')
+
+    meas = ""
+    if s["started"]:
+        meas = (f'<h2>Strategy measures</h2><div class="cards">'
+                f'<div class="card"><div class="l">Total return</div><div class="v {rc(m["ret"])}">{m["ret"]*100:+.1f}%</div></div>'
+                f'<div class="card"><div class="l">Sharpe</div><div class="v">{m["sharpe"]:.2f}</div></div>'
+                f'<div class="card"><div class="l">Volatility</div><div class="v">{m["vol"]*100:.0f}%</div></div>'
+                f'<div class="card"><div class="l">Max drawdown</div><div class="v">{m["maxdd"]*100:.0f}%</div></div>'
+                f'<div class="card"><div class="l">Round-trips</div><div class="v">{m["n_closed"]}</div></div>'
+                f'<div class="card"><div class="l">Win rate</div><div class="v">{m["win"]*100:.0f}%</div></div>'
+                f'</div>')
+
+    return f"""<!doctype html><meta charset="utf-8"><title>Breakout strategy</title>
+<style>{CSS}</style><div class="dash">
+<h1>Breakout Momentum &mdash; 3-slot swing <span class="pill">forward paper test</span></h1>
+<p class="sub">Top-223 US stocks by volume (weekly) &nbsp;·&nbsp; 20-day breakout &nbsp;·&nbsp;
+ranked by momentum + news sentiment &nbsp;·&nbsp; 1.5-ATR trail + 10-day-low exit &nbsp;|&nbsp;
+{status} &nbsp;·&nbsp; <span class="pill">${cap:,.0f} account</span></p>
+
+{actions}
+<div class="cards">{cards_html}</div>
+{chart}
+
+<h2>Today&rsquo;s breakouts &mdash; momentum + news sentiment</h2>
+<p class="sub">Combined score = {(1-bs.CONFIG['sent_weight'])*100:.0f}% momentum index +
+{bs.CONFIG['sent_weight']*100:.0f}% sentiment (VADER on recent headlines; 50 = neutral/no news).
+The top 3 fill the slots.</p>
+{cand_html}
+
+<h2>Current positions</h2>
+<p class="sub">Stop = live exit trigger (higher of the 1.5-ATR trail and the 10-day low).
+Room = cushion to that stop.</p>
+{pos_html}
+
+<h2>Trade log (forward)</h2>
+{trades_html}
+
+{meas}
+
+<p class="foot">Generated {dt.datetime.now():%Y-%m-%d %H:%M} by breakout_dashboard.py.
+Forward record stored in data/paper_breakout.json (+ paper_trades.csv, paper_equity.csv).
+Universe = S&amp;P 500 + liquid non-index names, top {bs.CONFIG['universe_size']} by dollar volume,
+weekly. Survivorship-aware; a research tool, not investment advice.</p>
+</div>"""
+
+
+def next_business_day():
+    d = dt.date.today() + dt.timedelta(days=1)
+    while d.weekday() >= 5:                                   # skip Sat/Sun
+        d += dt.timedelta(days=1)
+    return d
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--capital", type=float, default=8800.0)
+    p.add_argument("--start", default=None, help="Forward-test start (default: next business day).")
+    p.add_argument("--out", default="breakout_dashboard.html")
+    a = p.parse_args()
+    start = a.start or next_business_day().isoformat()
+    print("Building breakout dashboard (advancing paper account)...")
+    s = build(a.capital, start)
+    with open(a.out, "w") as f:
+        f.write(html(s))
+    n_pend = len(s["pending"])
+    print(f"Wrote {a.out}  (value ${s['value']:,.0f}, {n_pend} orders queued, "
+          f"{len(s['trades'])} trades logged)")
+
+
+if __name__ == "__main__":
+    main()
