@@ -38,19 +38,29 @@ CONFIG = dict(
     qqq_w=0.40, trend_w=0.40, bond_w=0.20, bond_ticker="IEF",
     band=0.15, channel=50, vol_window=60, asset_budget=0.028,
     max_name=0.25, cost_bps=2.0, start="2010-01-01",
+    # vol-targeted QQQ core: hold qqq_w x min(1, target/realized_vol); trimmed
+    # part goes to cash. target_vol=None -> flat qqq_w (no scaling).
+    qqq_target_vol=0.20,
 )
 
 
 # --------------------------------------------------------------------------- #
 # Data
 # --------------------------------------------------------------------------- #
-def load_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFrame:
-    df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=True)
-    if df.empty:
-        raise ValueError(f"No data for {ticker!r}")
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    return df[["Open", "High", "Low", "Close"]].dropna()
+def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 3) -> pd.DataFrame:
+    import time
+    last = None
+    for attempt in range(retries):
+        try:
+            df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=True)
+            if df is not None and not df.empty:
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(0)
+                return df[["Open", "High", "Low", "Close"]].dropna()
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+        time.sleep(1.5 * (attempt + 1))                    # back off on rate limits
+    raise ValueError(f"No data for {ticker!r} after {retries} tries ({last})")
 
 
 def build_panels(start: str, end: str | None = None):
@@ -121,11 +131,23 @@ def trend_sleeve(SIG, OR, AV) -> pd.DataFrame:
     return pd.DataFrame(W, index=SIG.index, columns=SIG.columns)
 
 
+def qqq_core_weight(AV) -> pd.Series:
+    """Vol-targeted QQQ core: qqq_w capped, scaled by min(1, target/realized_vol).
+    Calm markets -> full qqq_w; turbulent -> less (trimmed part held as cash).
+    ``qqq_target_vol=None`` disables scaling (flat qqq_w)."""
+    tv = CONFIG.get("qqq_target_vol")
+    if not tv:
+        return pd.Series(CONFIG["qqq_w"], index=AV.index)
+    scale = np.minimum(1.0, tv / AV["QQQ"]).clip(upper=1.0).fillna(1.0)
+    return CONFIG["qqq_w"] * scale
+
+
 def net_targets(SIG, OR, AV) -> pd.DataFrame:
-    """Combined per-ETF target weights: 40% QQQ + 40% trend + 20% bonds."""
+    """Combined per-ETF target weights: vol-targeted QQQ + 40% trend + 20% bonds
+    (the QQQ portion trimmed by vol-targeting is left in cash)."""
     TW = trend_sleeve(SIG, OR, AV)
     NET = CONFIG["trend_w"] * TW
-    NET["QQQ"] = NET["QQQ"] + CONFIG["qqq_w"]
+    NET["QQQ"] = NET["QQQ"] + qqq_core_weight(AV)
     NET[CONFIG["bond_ticker"]] = NET[CONFIG["bond_ticker"]] + CONFIG["bond_w"]
     return NET
 
@@ -173,8 +195,14 @@ def metrics(eq: pd.Series) -> dict:
                 total=eq.iloc[-1] / eq.iloc[0] - 1)
 
 
-def current_state(capital=23_000.0, start=None, end=None):
-    """Everything the dashboard needs: target book, latest trades, exposure."""
+def current_state(capital=23_000.0, start=None, end=None, track_start=None):
+    """Everything the dashboard needs: target book, latest trades, exposure.
+
+    ``track_start`` — if given, the chart is a live account tracker from that
+    date (rebased so the account starts at ``capital``) instead of the full
+    backtest history. Before any data exists past ``track_start`` it is a
+    single anchor point at ``capital`` that fills in as you re-run it.
+    """
     start = start or CONFIG["start"]
     SIG, OR, AV, CLOSE = build_panels(start, end)
     NET = net_targets(SIG, OR, AV)
@@ -184,6 +212,7 @@ def current_state(capital=23_000.0, start=None, end=None):
     # target book (what to hold now) at the latest close
     tgt = (NET.loc[last] * capital)
     book = tgt[tgt > capital * 0.001].sort_values(ascending=False)
+    prices = {t: float(CLOSE.loc[last, t]) for t in book.index}   # last close = buy reference
 
     # most recent rebalancing day, scaled to the user's capital
     tdf = res["trades"].copy()
@@ -201,18 +230,51 @@ def current_state(capital=23_000.0, start=None, end=None):
             cls[UNIVERSE.get(t, "?")] = cls.get(UNIVERSE.get(t, "?"), 0) + w
     cls = dict(sorted(cls.items(), key=lambda x: -x[1]))
 
-    # SPY correlation
+    # SPY correlation + equity chart data (strategy vs SPY, rebased to capital)
+    corr = np.nan; chart = None; cur_value = float(eq.iloc[-1])
     try:
-        spy = load_prices("SPY", start, end)["Open"].pct_change().shift(-1).reindex(eq.index)
-        corr = pd.DataFrame({"p": eq.pct_change(), "s": spy}).dropna().corr().iloc[0, 1]
+        spy_r = load_prices("SPY", start, end)["Open"].pct_change().shift(-1).reindex(eq.index)
+        corr = pd.DataFrame({"p": eq.pct_change(), "s": spy_r}).dropna().corr().iloc[0, 1]
+        spy_eq = capital * (1 + spy_r.fillna(0)).cumprod()
+
+        if track_start is not None:
+            # live account tracker: rebase both to `capital` at track_start
+            ts = pd.Timestamp(track_start)
+            w = eq[eq.index >= ts]; sw = spy_eq[spy_eq.index >= ts]
+            if len(w):
+                strat_v = capital * w / w.iloc[0]
+                spy_v = (capital * sw / sw.iloc[0]).reindex(strat_v.index).ffill()
+                if len(strat_v) > 180:                        # thin out long histories
+                    strat_v = strat_v.resample("W").last(); spy_v = spy_v.resample("W").last()
+                idx = strat_v.index
+                dates = [d.strftime("%d %b %y") for d in idx]
+                strat = [round(float(v)) for v in strat_v.values]
+                spyl = [round(float(v)) for v in spy_v.values]
+            else:                                             # not started yet — single anchor
+                dates = [ts.strftime("%d %b %y")]; strat = [round(capital)]; spyl = [round(capital)]
+            cur_value = float(strat[-1])
+            chart = dict(mode="track", start=ts.strftime("%d %b %Y"),
+                         dates=dates, strat=strat, spy=spyl, current=strat[-1])
+        else:
+            em = eq.resample("ME").last(); sm = spy_eq.resample("ME").last()
+            chart = dict(mode="history",
+                         dates=[d.strftime("%b %Y") for d in em.index],
+                         strat=[round(float(v)) for v in em.values],
+                         spy=[round(float(v)) for v in sm.values],
+                         current=round(float(em.values[-1])))
     except Exception:  # noqa: BLE001
-        corr = np.nan
+        pass
+
+    qcore = float(qqq_core_weight(AV).loc[last])              # vol-scaled QQQ core now
+    sleeves = {"QQQ (growth)": qcore, "Trend (diversifier)": CONFIG["trend_w"],
+               "Bonds (ballast)": CONFIG["bond_w"]}
+    if CONFIG["qqq_w"] - qcore > 1e-3:                        # vol-trimmed QQQ sits in cash
+        sleeves["Cash (vol de-risk)"] = CONFIG["qqq_w"] - qcore
 
     return dict(
-        asof=last, capital=capital, equity=eq, book=book, trades=latest_trades,
-        sleeves={"QQQ (growth)": CONFIG["qqq_w"], "Trend (diversifier)": CONFIG["trend_w"],
-                 "Bonds (ballast)": CONFIG["bond_w"]},
-        asset_class=cls, gross=res["gross"].iloc[-1], corr_spy=corr,
+        asof=last, capital=capital, equity=eq, book=book, prices=prices, trades=latest_trades,
+        cur_value=cur_value, qqq_core=qcore, sleeves=sleeves,
+        asset_class=cls, gross=res["gross"].iloc[-1], corr_spy=corr, chart=chart,
         metrics=metrics(eq), universe=UNIVERSE, config=CONFIG,
     )
 

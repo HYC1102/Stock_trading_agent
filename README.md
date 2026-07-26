@@ -4,9 +4,13 @@ A simple, robust, hand-runnable portfolio strategy:
 
 | Sleeve | Weight | What it is |
 |---|--:|---|
-| **QQQ** | 40% | US growth engine (held plain — no vol overlay) |
-| **Diversified trend** | 40% | Managed-futures-style trend across 18 asset-class ETFs |
+| **QQQ** | up to 40% | US growth engine, **volatility-targeted**: held at 40% × min(1, 20% ÷ realized vol), so it trims when QQQ is turbulent and parks the difference in cash |
+| **Diversified trend** | 40% | Managed-futures-style trend across 18 asset-class ETFs (inverse-vol sized) |
 | **Bonds (IEF)** | 20% | Ballast |
+
+The vol-target is a mild risk-damper, not a return-booster: over 2010–2026 it
+trimmed max drawdown (~−19% vs −22% flat) at the cost of ~1%/yr of CAGR, with
+essentially unchanged Sharpe. Set `qqq_target_vol=None` in `CONFIG` for a flat 40%.
 
 Rebalanced with a **15% no-trade band** — a position is only traded when its
 weight drifts more than 15% from target (trend entries/exits always execute).
