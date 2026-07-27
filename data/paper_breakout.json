@@ -1,35 +1,71 @@
 {
   "start_date": "2026-07-27",
   "capital": 8800.0,
-  "cash": 8800.0,
-  "positions": {},
-  "trades": [],
-  "equity": [],
-  "pending": [
+  "cash": 0.0,
+  "positions": {
+    "TRV": {
+      "shares": 7.569306486138388,
+      "entry": 387.53,
+      "entry_date": "2026-07-27",
+      "hi": 390.3500061035156
+    },
+    "WELL": {
+      "shares": 11.680072232469076,
+      "entry": 251.14,
+      "entry_date": "2026-07-27",
+      "hi": 248.33999633789062
+    },
+    "HWM": {
+      "shares": 10.024530367901095,
+      "entry": 292.44,
+      "entry_date": "2026-07-27",
+      "hi": 287.94000244140625
+    }
+  },
+  "trades": [
     {
+      "date": "2026-07-27",
       "side": "BUY",
       "ticker": "TRV",
-      "price_hint": 387.26,
+      "shares": 7.569,
+      "price": 387.53,
+      "value": 2933.33,
+      "reason": "breakout",
       "momentum": 100.0,
       "sentiment": 62.5,
       "combined": 85.0
     },
     {
+      "date": "2026-07-27",
       "side": "BUY",
       "ticker": "WELL",
-      "price_hint": 252.07,
+      "shares": 11.68,
+      "price": 251.14,
+      "value": 2933.33,
+      "reason": "breakout",
       "momentum": 90.9,
       "sentiment": 68.2,
       "combined": 81.8
     },
     {
+      "date": "2026-07-27",
       "side": "BUY",
       "ticker": "HWM",
-      "price_hint": 289.26,
+      "shares": 10.025,
+      "price": 292.44,
+      "value": 2931.57,
+      "reason": "breakout",
       "momentum": 81.8,
       "sentiment": 61.5,
       "combined": 73.7
     }
   ],
-  "last_close": null
+  "equity": [
+    {
+      "date": "2026-07-27",
+      "value": 8741.77
+    }
+  ],
+  "pending": [],
+  "last_close": "2026-07-27"
 }

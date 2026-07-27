@@ -1,0 +1,4 @@
+date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
+2026-07-27,BUY,TRV,7.569,387.53,2933.33,breakout,100.0,62.5,85.0
+2026-07-27,BUY,WELL,11.68,251.14,2933.33,breakout,90.9,68.2,81.8
+2026-07-27,BUY,HWM,10.025,292.44,2931.57,breakout,81.8,61.5,73.7
