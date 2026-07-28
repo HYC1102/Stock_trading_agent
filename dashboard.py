@@ -154,8 +154,8 @@ def build_html(s, fresh=False, start_date=None):
             for t, w in s["book"].items() if px.get(t))
         total = s["book"].sum()
         actions_html = (
-            f'<h2>Monday buy list — {start_date:%A %d %b %Y}</h2>'
-            f'<p class="sub">Place these buys at the open on {start_date:%d %b}. '
+            f'<h2>Opening buy list — {start_date:%A %d %b %Y}</h2>'
+            f'<p class="sub">Place these buys at the next open ({start_date:%d %b}). '
             f'{len(s["book"])} orders, ${total:,.0f} invested (${cap-total:,.0f} cash), then check back weekly. '
             f'Price = last close on {s["asof"]:%d %b}; the open will differ slightly.</p>'
             f'<table><tr><th>Action</th><th>Ticker</th><th>Asset class</th>'
@@ -207,11 +207,17 @@ def build_html(s, fresh=False, start_date=None):
 
     startpill = (f' &nbsp;·&nbsp; <span class="pill">start {start_date:%d %b %Y}</span>'
                  if fresh else "")
+    C = s["config"]
+    parts = ([f'{C["qqq_w"]:.0%} QQQ'] if C["qqq_w"] > 1e-9 else []) + \
+            [f'{C["trend_w"]:.0%} diversified trend', f'{C["bond_w"]:.0%} bonds ({C["bond_ticker"]})']
+    alloc = " &nbsp;·&nbsp; ".join(parts)
+    title = (f'{C["qqq_w"]:.0%} / {C["trend_w"]:.0%} / {C["bond_w"]:.0%} diversified portfolio'
+             if C["qqq_w"] > 1e-9 else f'{C["trend_w"]:.0%} Trend / {C["bond_w"]:.0%} Bonds portfolio')
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>40/40/20 Dashboard</title><style>{CSS}</style></head><body>
-<h1>40 / 40 / 20 diversified portfolio</h1>
-<p class="sub">40% QQQ &nbsp;·&nbsp; 40% diversified trend &nbsp;·&nbsp; 20% bonds &nbsp;·&nbsp;
-15% no-trade band &nbsp;|&nbsp; signals as of {s['asof'].date()} &nbsp;·&nbsp;
+<title>{title}</title><style>{CSS}</style></head><body>
+<h1>{title}</h1>
+<p class="sub">{alloc} &nbsp;·&nbsp;
+{C["band"]:.0%} no-trade band &nbsp;|&nbsp; signals as of {s['asof'].date()} &nbsp;·&nbsp;
 <span class="pill">${cap:,.0f} account</span>{startpill}</p>
 <div class="cards">{cards}</div>
 {perf_section(s)}

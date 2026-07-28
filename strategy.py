@@ -35,12 +35,13 @@ UNIVERSE = {
 }
 
 CONFIG = dict(
-    qqq_w=0.40, trend_w=0.40, bond_w=0.20, bond_ticker="IEF",
+    qqq_w=0.0, trend_w=2/3, bond_w=1/3, bond_ticker="IEF",
     band=0.15, channel=50, vol_window=60, asset_budget=0.028,
     max_name=0.25, cost_bps=2.0, start="2010-01-01",
     # vol-targeted QQQ core: hold qqq_w x min(1, target/realized_vol); trimmed
     # part goes to cash. target_vol=None -> flat qqq_w (no scaling).
-    qqq_target_vol=0.20,
+    # (qqq_w=0 -> no separate QQQ core; QQQ can still be held via the trend sleeve.)
+    qqq_target_vol=None,
 )
 
 
@@ -266,10 +267,11 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         pass
 
     qcore = float(qqq_core_weight(AV).loc[last])              # vol-scaled QQQ core now
-    sleeves = {"QQQ (growth)": qcore, "Trend (diversifier)": CONFIG["trend_w"],
-               "Bonds (ballast)": CONFIG["bond_w"]}
-    if CONFIG["qqq_w"] - qcore > 1e-3:                        # vol-trimmed QQQ sits in cash
-        sleeves["Cash (vol de-risk)"] = CONFIG["qqq_w"] - qcore
+    sleeves = {"Trend (diversifier)": CONFIG["trend_w"], "Bonds (ballast)": CONFIG["bond_w"]}
+    if CONFIG["qqq_w"] > 1e-9:                                # only show a QQQ core if there is one
+        sleeves = {"QQQ (growth)": qcore, **sleeves}
+        if CONFIG["qqq_w"] - qcore > 1e-3:                    # vol-trimmed QQQ sits in cash
+            sleeves["Cash (vol de-risk)"] = CONFIG["qqq_w"] - qcore
 
     return dict(
         asof=last, capital=capital, equity=eq, book=book, prices=prices, trades=latest_trades,
