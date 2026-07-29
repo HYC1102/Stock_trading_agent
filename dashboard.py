@@ -218,12 +218,20 @@ def build_html(s, fresh=False, start_date=None):
         title = f'{C["trend_w"]:.0%} Trend / {C["bond_w"]:.0%} Bonds portfolio'
     else:
         title = "Diversified Trend sleeve"
+    vt_txt = f' &nbsp;·&nbsp; vol-target {C["vol_target"]:.0%}' if C.get("vol_target") else ""
+    sc = s.get("scale_now", 1.0)
+    scale_line = (f'<p class="sub" style="margin-top:6px">Risk scale: <b>{sc*100:.0f}%</b> invested '
+                  + ('&mdash; <span style="color:var(--amber)">de-risked</span> (book vol above target, '
+                     'rest held in cash)' if sc < 0.99 else '&mdash; full exposure (book vol at/below target)')
+                  + '</p>') if C.get("vol_target") else ""
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>{title}</title><style>{CSS}</style></head><body>
 <h1>{title}</h1>
 <p class="sub">{alloc} &nbsp;·&nbsp;
-{C["band"]:.0%} no-trade band &nbsp;|&nbsp; signals as of {s['asof'].date()} &nbsp;·&nbsp;
+{C["band"]:.0%} no-trade band{vt_txt}
+&nbsp;|&nbsp; signals as of {s['asof'].date()} &nbsp;·&nbsp;
 <span class="pill">${cap:,.0f} account</span>{startpill}</p>
+{scale_line}
 <div class="cards">{cards}</div>
 {perf_section(s)}
 
