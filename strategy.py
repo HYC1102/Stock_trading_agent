@@ -26,7 +26,7 @@ PPY = 252
 # The trend sleeve's universe: diversified asset-class ETFs.
 UNIVERSE = {
     "SPY": "US equity", "QQQ": "US equity", "IWM": "US equity",
-    "EFA": "Intl equity", "EEM": "EM equity",
+    "EFA": "Intl equity", "EEM": "EM equity", "FXI": "China equity",
     "TLT": "Long bond", "IEF": "Mid bond",
     "LQD": "IG credit", "HYG": "HY credit",
     "DBC": "Commodities", "GLD": "Gold", "SLV": "Silver", "USO": "Oil",
