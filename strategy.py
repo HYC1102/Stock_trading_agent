@@ -35,12 +35,16 @@ UNIVERSE = {
 }
 
 CONFIG = dict(
-    qqq_w=0.40, trend_w=0.40, bond_w=0.20, bond_ticker="IEF",
+    qqq_w=0.0, trend_w=1.0, bond_w=0.0, bond_ticker="IEF",
     band=0.15, channel=50, vol_window=60, asset_budget=0.028,
     max_name=0.25, cost_bps=2.0, start="2010-01-01",
+    # trend-sleeve entry signal: "donchian" (N-day channel) or "atr" (Keltner-style
+    # ATR breakout, reconstruction of the RAAM paper's ATR Trend/Breakout System).
+    signal="donchian", atr_period=42, atr_mult=2.0,
     # vol-targeted QQQ core: hold qqq_w x min(1, target/realized_vol); trimmed
     # part goes to cash. target_vol=None -> flat qqq_w (no scaling).
-    qqq_target_vol=0.20,
+    # (qqq_w=0 -> no separate QQQ core; QQQ can still be held via the trend sleeve.)
+    qqq_target_vol=None,
 )
 
 
@@ -72,7 +76,7 @@ def build_panels(start: str, end: str | None = None):
         except Exception as exc:  # noqa: BLE001
             print(f"  ! {t}: skipped ({exc})")
             continue
-        sig[t] = trend_signal(raw, CONFIG["channel"])
+        sig[t] = entry_signal(raw)
         oret[t] = raw["Open"].pct_change().shift(-1)           # honest next-open fill
         vol[t] = (raw["Close"].pct_change().rolling(CONFIG["vol_window"]).std()
                   * np.sqrt(PPY)).shift(1)
@@ -99,6 +103,36 @@ def trend_signal(raw: pd.DataFrame, channel: int) -> pd.Series:
             pos = 0
         st[i] = pos
     return pd.Series(st, index=raw.index)
+
+
+def atr_breakout_signal(raw: pd.DataFrame, period: int, mult: float) -> pd.Series:
+    """Long/flat Keltner-style ATR breakout — reconstruction (A) of the RAAM paper's
+    ATR Trend/Breakout System: go long when the day's HIGH pierces EMA + mult*ATR,
+    go flat when the LOW pierces EMA - mult*ATR. Bands use prior-day values so there
+    is no look-ahead (mirrors trend_signal's shifted-channel convention)."""
+    h, l, c = raw["High"], raw["Low"], raw["Close"]
+    pc = c.shift(1)
+    tr = pd.concat([h - l, (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
+    atr = tr.ewm(alpha=1 / period, adjust=False).mean()
+    basis = c.ewm(span=period, adjust=False).mean()
+    upper = (basis + mult * atr).shift(1).to_numpy()
+    lower = (basis - mult * atr).shift(1).to_numpy()
+    H, L = h.to_numpy(), l.to_numpy()
+    st = np.zeros(len(c)); pos = 0
+    for i in range(len(c)):
+        if not np.isnan(upper[i]) and H[i] > upper[i]:
+            pos = 1
+        elif not np.isnan(lower[i]) and L[i] < lower[i]:
+            pos = 0
+        st[i] = pos
+    return pd.Series(st, index=raw.index)
+
+
+def entry_signal(raw: pd.DataFrame) -> pd.Series:
+    """Dispatch to the configured trend-sleeve entry signal."""
+    if CONFIG.get("signal", "donchian") == "atr":
+        return atr_breakout_signal(raw, CONFIG["atr_period"], CONFIG["atr_mult"])
+    return trend_signal(raw, CONFIG["channel"])
 
 
 def trend_sleeve(SIG, OR, AV) -> pd.DataFrame:
@@ -266,10 +300,14 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         pass
 
     qcore = float(qqq_core_weight(AV).loc[last])              # vol-scaled QQQ core now
-    sleeves = {"QQQ (growth)": qcore, "Trend (diversifier)": CONFIG["trend_w"],
-               "Bonds (ballast)": CONFIG["bond_w"]}
-    if CONFIG["qqq_w"] - qcore > 1e-3:                        # vol-trimmed QQQ sits in cash
-        sleeves["Cash (vol de-risk)"] = CONFIG["qqq_w"] - qcore
+    sleeves = {}                                             # only show sleeves with weight
+    if CONFIG["qqq_w"] > 1e-9:
+        sleeves["QQQ (growth)"] = qcore
+        if CONFIG["qqq_w"] - qcore > 1e-3:                    # vol-trimmed QQQ sits in cash
+            sleeves["Cash (vol de-risk)"] = CONFIG["qqq_w"] - qcore
+    sleeves["Trend (diversifier)"] = CONFIG["trend_w"]
+    if CONFIG["bond_w"] > 1e-9:
+        sleeves["Bonds (ballast)"] = CONFIG["bond_w"]
 
     return dict(
         asof=last, capital=capital, equity=eq, book=book, prices=prices, trades=latest_trades,

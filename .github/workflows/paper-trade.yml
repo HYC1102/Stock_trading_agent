@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: '30 22 * * 1-5'      # 22:30 UTC (~6:30pm ET), Mon-Fri (after the US close)
   workflow_dispatch: {}           # manual "Run workflow" button, for testing
+  push:
+    branches: [main]              # republish on every push to main (state commits use
+                                  # GITHUB_TOKEN, which does not re-trigger -> no loop)
 
 permissions:
   contents: write                 # commit the updated paper-trade state back
@@ -34,7 +37,7 @@ jobs:
         run: python breakout_dashboard.py --capital 8800
 
       - name: Rebuild the 40/40/20 portfolio dashboard (non-fatal)
-        run: python dashboard.py --capital 23000 || echo "portfolio dashboard skipped"
+        run: python dashboard.py --fresh --capital 13500 --date 2026-07-29 || echo "portfolio dashboard skipped"
 
       - name: Commit the forward-test log
         run: |
