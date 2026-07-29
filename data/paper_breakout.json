@@ -68,8 +68,26 @@
     {
       "date": "2026-07-28",
       "value": 8719.01
+    },
+    {
+      "date": "2026-07-29",
+      "value": 8494.96
     }
   ],
-  "pending": [],
-  "last_close": "2026-07-28"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "HWM",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "ADP",
+      "price_hint": 273.37,
+      "momentum": 94.7,
+      "sentiment": 62.4,
+      "combined": 81.8
+    }
+  ],
+  "last_close": "2026-07-29"
 }
