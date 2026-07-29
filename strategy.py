@@ -32,6 +32,7 @@ UNIVERSE = {
     "DBC": "Commodities", "GLD": "Gold", "SLV": "Silver", "USO": "Oil",
     "UUP": "US dollar", "VNQ": "REIT",
     "SOXX": "Semis", "XLK": "Tech sector", "XLE": "Energy sector",
+    "XBI": "Biotech", "BOTZ": "Robotics",
 }
 
 CONFIG = dict(
