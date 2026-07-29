@@ -70,6 +70,22 @@
       "value": 8719.01
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "TRV",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "WELL",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "HWM",
+      "reason": "data gap"
+    }
+  ],
   "last_close": "2026-07-28"
 }
