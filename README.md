@@ -1,49 +1,69 @@
-# 40 / 40 / 20 Diversified Portfolio
+# Trend & Breakout Strategies
 
-A simple, robust, hand-runnable portfolio strategy:
+Two hand-runnable, honestly-validated strategies with self-contained dashboards
+that can auto-publish to GitHub Pages. Everything uses honest next-open fills
+(signals decided on the close, filled at the next open — no look-ahead) and
+total-return data (dividends and coupons included).
 
-| Sleeve | Weight | What it is |
-|---|--:|---|
-| **QQQ** | up to 40% | US growth engine, **volatility-targeted**: held at 40% × min(1, 20% ÷ realized vol), so it trims when QQQ is turbulent and parks the difference in cash |
-| **Diversified trend** | 40% | Managed-futures-style trend across 18 asset-class ETFs (inverse-vol sized) |
-| **Bonds (IEF)** | 20% | Ballast |
+| # | Strategy | File | Dashboard |
+|---|---|---|---|
+| 1 | **Diversified Trend sleeve** | `strategy.py` | `dashboard.py` → `dashboard.html` |
+| 2 | **Breakout momentum (3-slot swing)** | `breakout_sentiment.py` + `paper_trade.py` | `breakout_dashboard.py` → `breakout_dashboard.html` |
 
-The vol-target is a mild risk-damper, not a return-booster: over 2010–2026 it
-trimmed max drawdown (~−19% vs −22% flat) at the cost of ~1%/yr of CAGR, with
-essentially unchanged Sharpe. Set `qqq_target_vol=None` in `CONFIG` for a flat 40%.
+`index.html` tabs between the two. A daily GitHub Actions workflow regenerates and
+publishes both to Pages (see [DEPLOY.md](DEPLOY.md)).
 
-Rebalanced with a **15% no-trade band** — a position is only traded when its
-weight drifts more than 15% from target (trend entries/exits always execute).
-That keeps trading to **~35–40 trades/year** — a monthly chore, not a daily one.
-Signals are decided on the close and filled at the next open (no look-ahead), and
-all returns are total returns (dividends and bond coupons included).
+---
 
-## Why this design
+## 1 · Diversified Trend sleeve  *(the core strategy)*
 
-Built and validated across a long research process (see git history), the honest
-findings were:
-- **You can't beat a broad index by timing it** — every single-asset timing edge
-  died out of sample.
-- **The only durable edge is diversification** — combining uncorrelated return
-  streams (equity + trend + bonds) beats any of them alone on a risk-adjusted basis.
-- **Trend-following is a genuine diversifier** (low correlation to stocks, crisis
-  alpha), not a standalone winner.
-- **A no-trade band removes ~97% of the trading noise with no performance cost.**
+Managed-futures-style trend-following across **18 asset-class ETFs**, inverse-vol
+sized, holding only the assets currently in an uptrend:
 
-## What to expect (honest)
+- **Signal** — 50-day Donchian breakout (long above the N-day high, flat below the
+  N-day low), per asset. *(An ATR-breakout variant is available via
+  `CONFIG["signal"]="atr"`; testing showed it does not beat Donchian, so Donchian
+  is the default.)*
+- **Sizing** — inverse-volatility (risk-parity-style), unlevered, capped per name.
+- **Rebalance** — a **15% no-trade band** keeps trading to ~35 trades/year.
 
-Over a full cycle (2006–2026) this delivered roughly **SPY-like returns with about
-half the drawdown** — Sharpe ~1.0 vs SPY's ~0.7, max drawdown ~−22% vs −55%. But:
-- It **lags straight stocks in bull markets** (it made ~half of SPY over 2020–2026).
-- Its edge shows up in **crashes** (2008: −7% vs SPY −37%).
-- It's a *smoother ride to a similar destination* — not a market-beater. Backtests
-  overstate; expect ~6–9% real annual returns and be ready for a −20-something% drawdown.
+**Honest performance (2010–2026):** ~**8.9% CAGR**, Sharpe ~**0.83–0.97**, max
+drawdown ~**−21%**, and — notably — only **~0.50 correlation to SPY**. It was the
+one configuration in this whole project that **beat SPY on risk-adjusted terms
+out-of-sample** (2018–2026 Sharpe 0.83 vs SPY 0.87, at far lower correlation), and
+its edge held up in walk-forward. It gives up bull-market upside for a smoother,
+diversifying, crisis-resilient return stream — a genuine diversifier, not a
+market-beater.
 
-## Universe (the trend sleeve, 18 ETFs)
+The strategy is configurable (`CONFIG` in `strategy.py`): the shipped default is
+**100% trend** (`trend_w=1.0`), but it also supports a fixed bond sleeve or a
+vol-targeted QQQ core. Adding a fixed 1/3 bonds was tested and *did not* improve
+risk-adjusted returns out-of-sample (and hurt in 2022) — the trend sleeve already
+holds bonds/credit dynamically when they trend, so the default is bond-free.
 
-Equities (SPY, QQQ, IWM, EFA, EEM) · bonds (TLT, IEF) · credit (LQD, HYG) ·
-commodities/metals (DBC, GLD, SLV, USO) · dollar (UUP) · REITs (VNQ) ·
-sectors (SOXX, XLK, XLE).
+**Universe (18 ETFs):** equities (SPY, QQQ, IWM, EFA, EEM) · bonds (TLT, IEF) ·
+credit (LQD, HYG) · commodities/metals (DBC, GLD, SLV, USO) · dollar (UUP) ·
+REITs (VNQ) · sectors (SOXX, XLK, XLE).
+
+---
+
+## 2 · Breakout momentum  *(high-octane satellite / paper-trade)*
+
+A 3-slot swing trader on the most liquid US stocks: each day, scan the **top-223
+by dollar volume** (rebuilt weekly) for 20-day breakouts, **rank by momentum +
+real news sentiment** (yfinance headlines → VADER), hold the top 3 with a
+**1.5-ATR trailing stop + 10-day-low exit** and a **200-day SPY regime filter**.
+
+`paper_trade.py` runs it as a **persistent forward paper-trade** (state in
+`data/paper_breakout.json`, every trade + its sentiment logged to CSV), starting
+from a fixed date and advancing once per run.
+
+⚠️ **Honest caveats:** the backtest is **survivorship-biased** (today's index
+members only) and **regime-dependent** — impressive in momentum regimes, weaker
+otherwise, with deep (−40%+) drawdowns. Treat it as a research/paper-trade
+experiment, not a validated edge.
+
+---
 
 ## Setup
 
@@ -55,28 +75,21 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python strategy.py --capital 23000        # print current book, trades, exposure
-python dashboard.py --capital 23000        # -> dashboard.html (open in a browser)
+python strategy.py --capital 13500                     # trend book, trades, exposure
+python dashboard.py --fresh --capital 13500            # -> dashboard.html (trend sleeve)
+python breakout_dashboard.py --capital 8800            # -> breakout_dashboard.html
 ```
 
-- `strategy.py` — the self-contained strategy (signal, sizing, band rebalancing,
-  backtest, current state). Import `current_state()` / `backtest()` to build on it.
-- `dashboard.py` — generates a self-contained `dashboard.html` with two panels:
-  **Today's actions** (target holdings + the trades to place) and
-  **Risk & exposure** (sleeve mix, asset-class breakdown, current risk stats).
+Then open `index.html` (or serve the folder: `python -m http.server 8000`).
 
-## Running it for real
+## Deploy to GitHub Pages
 
-1. **Weekly (or monthly):** run `python dashboard.py` (or `strategy.py`).
-2. **Buy the target book** if starting fresh; otherwise place only the trades it
-   lists (the positions that broke the 15% band).
-3. That's it — no daily attention needed.
-
-Config (weights, band, universe) lives in `CONFIG` / `UNIVERSE` at the top of
-`strategy.py`.
+`.github/workflows/paper-trade.yml` runs daily (and on push to `main`), regenerates
+both dashboards, commits the forward paper-trade log back to the repo, and publishes
+to Pages. One-time setup (repo → Pages source = *GitHub Actions*, Actions write
+permission) is in **[DEPLOY.md](DEPLOY.md)**.
 
 ## Caveats
 
-Backtests assume the future rhymes with the past — it won't exactly. Live results
-run below backtest. Bonds-and-stocks-fall-together shocks (like 2022) are this
-portfolio's weak spot. **This is a research tool, not investment advice.**
+Backtests assume the future rhymes with the past — it won't exactly, and live
+results run below backtest. **These are research tools, not investment advice.**
