@@ -16,12 +16,14 @@ iframe{width:100%;border:0;display:block;height:calc(100vh - 53px)}
   <button class="tab" id="t-brk" onclick="show('brk')">Breakout Momentum</button>
   <span class="date" id="d"></span>
 </div>
-<iframe id="frame" src="dashboard.html" title="dashboard"></iframe>
+<iframe id="frame" title="dashboard"></iframe>
 <script>
+const bust = p => p + '?t=' + Date.now();          // force a fresh fetch, never cache
 function show(w){
-  document.getElementById('frame').src = w==='port' ? 'dashboard.html' : 'breakout_dashboard.html';
+  document.getElementById('frame').src = bust(w==='port' ? 'dashboard.html' : 'breakout_dashboard.html');
   document.getElementById('t-port').classList.toggle('on', w==='port');
   document.getElementById('t-brk').classList.toggle('on', w==='brk');
 }
+show('port');
 document.getElementById('d').textContent = new Date().toDateString();
 </script></body></html>
