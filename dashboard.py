@@ -209,10 +209,15 @@ def build_html(s, fresh=False, start_date=None):
                  if fresh else "")
     C = s["config"]
     parts = ([f'{C["qqq_w"]:.0%} QQQ'] if C["qqq_w"] > 1e-9 else []) + \
-            [f'{C["trend_w"]:.0%} diversified trend', f'{C["bond_w"]:.0%} bonds ({C["bond_ticker"]})']
+            [f'{C["trend_w"]:.0%} diversified trend'] + \
+            ([f'{C["bond_w"]:.0%} bonds ({C["bond_ticker"]})'] if C["bond_w"] > 1e-9 else [])
     alloc = " &nbsp;·&nbsp; ".join(parts)
-    title = (f'{C["qqq_w"]:.0%} / {C["trend_w"]:.0%} / {C["bond_w"]:.0%} diversified portfolio'
-             if C["qqq_w"] > 1e-9 else f'{C["trend_w"]:.0%} Trend / {C["bond_w"]:.0%} Bonds portfolio')
+    if C["qqq_w"] > 1e-9:
+        title = f'{C["qqq_w"]:.0%} / {C["trend_w"]:.0%} / {C["bond_w"]:.0%} diversified portfolio'
+    elif C["bond_w"] > 1e-9:
+        title = f'{C["trend_w"]:.0%} Trend / {C["bond_w"]:.0%} Bonds portfolio'
+    else:
+        title = "Diversified Trend sleeve"
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>{title}</title><style>{CSS}</style></head><body>
 <h1>{title}</h1>
