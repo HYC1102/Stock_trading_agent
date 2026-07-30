@@ -34,7 +34,10 @@ CONFIG = dict(
     universe_size=223,      # top-N US stocks by average dollar volume
     rebuild="W",            # universe rebuild cadence: "W" weekly | "M" monthly
     adv_window=60,          # days for the ADV ranking
-    breakout=20,            # Donchian high lookback (fresh N-day-high breakout)
+    entry="atr",            # entry signal: "atr" = Keltner-style ATR-band breakout | "donchian"
+    breakout=20,            # Donchian high lookback (fresh N-day-high breakout) [donchian entry]
+    atr_break_period=20,    # ATR-band entry: EMA basis + ATR lookback [atr entry]
+    atr_break_mult=3.0,     # ATR-band entry: band width in ATRs [atr entry]
     proxy_window=63,        # momentum-proxy lookback (~3 months) [Phase 1 ranking]
     sent_weight=0.4,        # combined rank = (1-w)*momentum + w*sentiment (display/live)
     atr_window=14,          # Wilder ATR
@@ -42,7 +45,7 @@ CONFIG = dict(
     exit_low=10,            # N-day-low exit lookback
     use_exit_low=True,      # enable the N-day-low exit
     pct_stop=None,          # hard stop: exit if price <= entry*(1-pct_stop) (None = off)
-    slots=3,                # concurrent positions
+    slots=5,                # concurrent positions
     sizing="slots",         # "slots" = independent 1/N slots, no rebalancing (default)
                             # | "full" = re-equalize whole book each change | "risk" = ATR risk-sized
     weight_mode="fixed",    # (full mode only) "fixed"=1/slots each | "equal"=1/held | "invvol"
@@ -151,7 +154,18 @@ def atr(df: pd.DataFrame, window: int) -> pd.Series:
 
 
 def is_breakout(df: pd.DataFrame, n: int) -> bool:
-    """True if the latest close is a fresh N-day-high breakout."""
+    """True if today triggers a fresh breakout.
+
+    entry="atr": today's High pierces yesterday's Keltner-style upper band
+    (EMA basis + mult*ATR).  entry="donchian": today's Close makes a fresh
+    N-day high.  Chosen by CONFIG['entry'].
+    """
+    if CONFIG.get("entry", "donchian") == "atr":
+        N, K = CONFIG["atr_break_period"], CONFIG["atr_break_mult"]
+        if len(df) < N + 2:
+            return False
+        band = (df["Close"].ewm(span=N, adjust=False).mean() + K * atr(df, N)).shift(1)
+        return df["High"].iloc[-1] > band.iloc[-1]
     if len(df) < n + 1:
         return False
     prior_high = df["High"].iloc[-(n + 1):-1].max()
@@ -294,9 +308,15 @@ def build_panels(prices: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     close, high, low = F["Close"], F["High"], F["Low"]
     pc = close.shift(1)
     tr = np.maximum(high - low, np.maximum((high - pc).abs(), (low - pc).abs()))
+    if CONFIG.get("entry", "donchian") == "atr":
+        N, K = CONFIG["atr_break_period"], CONFIG["atr_break_mult"]
+        band = close.ewm(span=N, adjust=False).mean() + K * tr.ewm(alpha=1 / N, adjust=False).mean()
+        breakout = high > band.shift(1)
+    else:
+        breakout = close > high.rolling(CONFIG["breakout"]).max().shift(1)
     P = dict(
         open=F["Open"], close=close, high=high, low=low,
-        breakout=close > high.rolling(CONFIG["breakout"]).max().shift(1),
+        breakout=breakout,
         proxy=close.pct_change(CONFIG["proxy_window"], fill_method=None),
         atr=tr.ewm(alpha=1 / CONFIG["atr_window"], adjust=False).mean(),
         adv=(close * F["Volume"]).rolling(CONFIG["adv_window"]).mean(),

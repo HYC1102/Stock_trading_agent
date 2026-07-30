@@ -5,6 +5,7 @@ name: Daily paper trade
 on:
   schedule:
     - cron: '30 22 * * 1-5'      # 22:30 UTC (~6:30pm ET), Mon-Fri (after the US close)
+    - cron: '0 1 * * 2-6'        # 01:00 UTC backup (~9pm ET) if EOD data was late at 22:30
   workflow_dispatch: {}           # manual "Run workflow" button, for testing
   push:
     branches: [main]              # republish on every push to main (state commits use
@@ -33,11 +34,26 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # yfinance rate-limits cloud IPs intermittently; retry so a transient
+      # failure never leaves a dashboard frozen on a prior day. Steps always
+      # exit 0 -- if generation still fails, Pages just keeps the last-good copy.
       - name: Advance the paper account (breakout forward test)
-        run: python breakout_dashboard.py --capital 8800
+        run: |
+          ok=""
+          for i in 1 2 3; do
+            if python breakout_dashboard.py --capital 8800; then ok=1; break; fi
+            echo "breakout attempt $i failed; retrying in 45s"; sleep 45
+          done
+          [ -n "$ok" ] || echo "breakout dashboard failed after 3 tries (keeping last-good)"
 
-      - name: Rebuild the 40/40/20 portfolio dashboard (non-fatal)
-        run: python dashboard.py --fresh --capital 13500 --date 2026-07-29 || echo "portfolio dashboard skipped"
+      - name: Rebuild the trend-sleeve dashboard
+        run: |
+          ok=""
+          for i in 1 2 3; do
+            if python dashboard.py --fresh --capital 13500 --date 2026-07-29; then ok=1; break; fi
+            echo "trend attempt $i failed; retrying in 45s"; sleep 45
+          done
+          [ -n "$ok" ] || echo "trend dashboard failed after 3 tries (keeping last-good)"
 
       - name: Commit the forward-test log
         run: |
