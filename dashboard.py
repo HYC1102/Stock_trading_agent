@@ -122,17 +122,19 @@ def next_monday():
     return today + dt.timedelta(days=ahead)
 
 
-def build_html(s, fresh=False, start_date=None):
+def build_html(s, fresh=False, start_date=None, track_date=None):
     m = s["metrics"]; cap = s["capital"]
+    since = start_date or track_date          # inception for the account cards / start pill
     colors = ["#2a78d6", "#1baf7a", "#c98500", "#8a63d2", "#d95f2b", "#4a9",
               "#e07a9a", "#5f9ea0", "#b07d3a"]
 
-    if fresh:
+    if fresh or track_date:
         curv = s.get("cur_value", cap)
         pnl = curv / cap - 1
         card_data = [("Starting capital", f"${cap:,.0f}"),
                      ("Current value", f"${curv:,.0f}"),
-                     ("Return since start", f"{pnl*100:+.1f}%"),
+                     (f"Return since {since:%d %b}" if since else "Return since start",
+                      f"{pnl*100:+.1f}%"),
                      ("Backtest CAGR", f"{m['cagr']*100:.1f}%"),
                      ("Backtest Sharpe", f"{m['sharpe']:.2f}")]
     else:
@@ -205,8 +207,8 @@ def build_html(s, fresh=False, start_date=None):
                              ("# positions", f"{len(s['book'])}"),
                          ])
 
-    startpill = (f' &nbsp;·&nbsp; <span class="pill">start {start_date:%d %b %Y}</span>'
-                 if fresh else "")
+    startpill = (f' &nbsp;·&nbsp; <span class="pill">start {since:%d %b %Y}</span>'
+                 if since else "")
     C = s["config"]
     parts = ([f'{C["qqq_w"]:.0%} QQQ'] if C["qqq_w"] > 1e-9 else []) + \
             [f'{C["trend_w"]:.0%} diversified trend'] + \
@@ -257,14 +259,19 @@ def main():
     p.add_argument("--fresh", action="store_true",
                    help="Frame as a fresh-start buy list (defaults to next Monday).")
     p.add_argument("--date", default=None, help="Fresh-start date, YYYY-MM-DD.")
+    p.add_argument("--track", default=None,
+                   help="Ongoing-account inception YYYY-MM-DD: live tracker view (current "
+                        "holdings + return since inception), not a fresh buy list.")
     args = p.parse_args()
 
     print("Building dashboard (fetching data + running strategy)...")
     sd = (dt.date.fromisoformat(args.date) if args.date else next_monday()) if args.fresh else None
+    td = dt.date.fromisoformat(args.track) if args.track else None
+    ts = sd or td                                     # inception used to rebase the tracker
     s = st.current_state(capital=args.capital, start=args.start,
-                         track_start=sd.isoformat() if sd else None)
+                         track_start=ts.isoformat() if ts else None)
     with open(args.out, "w") as f:
-        f.write(build_html(s, fresh=args.fresh, start_date=sd))
+        f.write(build_html(s, fresh=args.fresh, start_date=sd, track_date=td))
     print(f"Dashboard written to {args.out}  (open it in a browser)")
 
 
