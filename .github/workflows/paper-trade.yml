@@ -50,7 +50,7 @@ jobs:
         run: |
           ok=""
           for i in 1 2 3; do
-            if python dashboard.py --fresh --capital 13500 --date 2026-07-29; then ok=1; break; fi
+            if python dashboard.py --track 2026-07-28 --capital 13500; then ok=1; break; fi
             echo "trend attempt $i failed; retrying in 45s"; sleep 45
           done
           [ -n "$ok" ] || echo "trend dashboard failed after 3 tries (keeping last-good)"
