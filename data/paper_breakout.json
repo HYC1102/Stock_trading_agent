@@ -1,51 +1,107 @@
 {
   "start_date": "2026-07-30",
   "capital": 8800.0,
-  "cash": 8800.0,
-  "positions": {},
-  "trades": [],
-  "equity": [],
-  "pending": [
+  "cash": 0.0,
+  "positions": {
+    "ADP": {
+      "shares": 6.626007199584183,
+      "entry": 265.62,
+      "entry_date": "2026-07-30",
+      "hi": 263.8699951171875
+    },
+    "TRV": {
+      "shares": 4.556398503787737,
+      "entry": 386.27,
+      "entry_date": "2026-07-30",
+      "hi": 375.989990234375
+    },
+    "WDAY": {
+      "shares": 11.137830353208802,
+      "entry": 158.02,
+      "entry_date": "2026-07-30",
+      "hi": 158.11000061035156
+    },
+    "RTX": {
+      "shares": 8.205128205128204,
+      "entry": 214.5,
+      "entry_date": "2026-07-30",
+      "hi": 214.3800048828125
+    },
+    "F": {
+      "shares": 114.61801397915866,
+      "entry": 15.34,
+      "entry_date": "2026-07-30",
+      "hi": 14.859999656677246
+    }
+  },
+  "trades": [
     {
+      "date": "2026-07-30",
       "side": "BUY",
       "ticker": "ADP",
-      "price_hint": 273.37,
+      "shares": 6.626,
+      "price": 265.62,
+      "value": 1760.0,
+      "reason": "breakout",
       "momentum": 96.0,
       "sentiment": 62.4,
       "combined": 82.6
     },
     {
+      "date": "2026-07-30",
       "side": "BUY",
       "ticker": "TRV",
-      "price_hint": 389.01,
+      "shares": 4.556,
+      "price": 386.27,
+      "value": 1760.0,
+      "reason": "breakout",
       "momentum": 92.0,
       "sentiment": 64.5,
       "combined": 81.0
     },
     {
+      "date": "2026-07-30",
       "side": "BUY",
       "ticker": "WDAY",
-      "price_hint": 168.01,
+      "shares": 11.138,
+      "price": 158.02,
+      "value": 1760.0,
+      "reason": "breakout",
       "momentum": 100.0,
       "sentiment": 45.5,
       "combined": 78.2
     },
     {
+      "date": "2026-07-30",
       "side": "BUY",
       "ticker": "RTX",
-      "price_hint": 215.25,
+      "shares": 8.205,
+      "price": 214.5,
+      "value": 1760.0,
+      "reason": "breakout",
       "momentum": 84.0,
       "sentiment": 60.7,
       "combined": 74.7
     },
     {
+      "date": "2026-07-30",
       "side": "BUY",
       "ticker": "F",
-      "price_hint": 15.28,
+      "shares": 114.618,
+      "price": 15.34,
+      "value": 1758.24,
+      "reason": "breakout",
       "momentum": 88.0,
       "sentiment": 52.9,
       "combined": 74.0
     }
   ],
-  "last_close": null
+  "equity": [
+    {
+      "date": "2026-07-30",
+      "value": 8684.81
+    }
+  ],
+  "pending": [],
+  "last_close": "2026-07-30"
 }
