@@ -301,9 +301,18 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         spy_eq = capital * (1 + spy_r.fillna(0)).cumprod()
 
         if track_start is not None:
-            # live account tracker: rebase both to `capital` at track_start
+            # Live account tracker: mark the held book to each CLOSE
+            # (close-to-close, weights from the prior close) so the value
+            # reflects the latest close. The backtest equity above books
+            # returns open-to-open (honest next-open fills), so its final bar
+            # stays flat until the next open exists -- not what a live account
+            # holder wants to see mid-week.
             ts = pd.Timestamp(track_start)
-            w = eq[eq.index >= ts]; sw = spy_eq[spy_eq.index >= ts]
+            cret = CLOSE.pct_change()
+            book_r = (NET.reindex(CLOSE.index).shift(1) * cret).sum(axis=1, min_count=1)
+            beq = (1 + book_r.fillna(0.0)).cumprod()
+            spy_eq = load_prices("SPY", start, end)["Close"].reindex(CLOSE.index).ffill()
+            w = beq[beq.index >= ts]; sw = spy_eq[spy_eq.index >= ts]
             if len(w):
                 strat_v = capital * w / w.iloc[0]
                 spy_v = (capital * sw / sw.iloc[0]).reindex(strat_v.index).ffill()
