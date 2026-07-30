@@ -69,7 +69,7 @@ def episodes(trades):
 
 
 def build(capital: float, start: str):
-    bs.CONFIG.update(sizing="slots", slots=3, regime=True, rank_mode="proxy",
+    bs.CONFIG.update(sizing="slots", slots=5, regime=True, rank_mode="proxy",
                      atr_stop=1.5, exit_low=10, use_exit_low=True, pct_stop=None,
                      take_profit=None, time_stop=None, universe_size=223,
                      rebuild="W", pool="broad")
