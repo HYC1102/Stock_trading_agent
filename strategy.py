@@ -16,12 +16,31 @@ This module is self-contained. Run `python strategy.py` for a summary, or import
 from __future__ import annotations
 
 import argparse
+import datetime as dt
+import time
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
 PPY = 252
+
+
+def _expected_last_session() -> dt.date:
+    """Most recent US trading session that should be fully available.
+
+    UTC-based, accounts for weekends and the ~20:00 UTC close only (holidays are
+    ignored -- at worst an exchange holiday triggers a couple of harmless extra
+    retries).  Used to detect when yfinance hands back a stale response so we can
+    re-fetch instead of silently publishing yesterday's data.
+    """
+    now = dt.datetime.utcnow()
+    d = now.date()
+    if now.hour < 21:                       # today's ~20:00 UTC close not settled yet
+        d -= dt.timedelta(days=1)
+    while d.weekday() >= 5:                  # step back over Sat/Sun
+        d -= dt.timedelta(days=1)
+    return d
 
 # The trend sleeve's universe: diversified asset-class ETFs.
 UNIVERSE = {
@@ -73,22 +92,36 @@ def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 
 
 
 def build_panels(start: str, end: str | None = None):
-    """Return aligned (signal, next-open-return, trailing-vol, close) frames."""
-    sig, oret, vol, close = {}, {}, {}, {}
-    for t in UNIVERSE:
-        try:
-            raw = load_prices(t, start, end)
-        except Exception as exc:  # noqa: BLE001
-            print(f"  ! {t}: skipped ({exc})")
-            continue
-        sig[t] = entry_signal(raw)
-        oret[t] = raw["Open"].pct_change().shift(-1)           # honest next-open fill
-        vol[t] = (raw["Close"].pct_change().rolling(CONFIG["vol_window"]).std()
-                  * np.sqrt(PPY)).shift(1)
-        close[t] = raw["Close"]
-    idx = sorted(set().union(*[s.index for s in oret.values()]))
-    return (pd.DataFrame(sig).reindex(idx), pd.DataFrame(oret).reindex(idx),
-            pd.DataFrame(vol).reindex(idx), pd.DataFrame(close).reindex(idx))
+    """Return aligned (signal, next-open-return, trailing-vol, close) frames.
+
+    yfinance intermittently serves a stale response (missing the latest 1-2
+    sessions) that flips back to fresh minutes later. When querying live
+    (end is None) and the assembled panel is behind the most recent expected
+    session, wait briefly and rebuild -- so the dashboard doesn't publish
+    yesterday's data just because one fetch came back stale.
+    """
+    exp = _expected_last_session() if end is None else None
+    for attempt in range(4):
+        sig, oret, vol, close = {}, {}, {}, {}
+        for t in UNIVERSE:
+            try:
+                raw = load_prices(t, start, end)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  ! {t}: skipped ({exc})")
+                continue
+            sig[t] = entry_signal(raw)
+            oret[t] = raw["Open"].pct_change().shift(-1)           # honest next-open fill
+            vol[t] = (raw["Close"].pct_change().rolling(CONFIG["vol_window"]).std()
+                      * np.sqrt(PPY)).shift(1)
+            close[t] = raw["Close"]
+        idx = sorted(set().union(*[s.index for s in oret.values()]))
+        latest = idx[-1].date() if idx else None
+        if exp is None or attempt == 3 or (latest and latest >= exp):
+            return (pd.DataFrame(sig).reindex(idx), pd.DataFrame(oret).reindex(idx),
+                    pd.DataFrame(vol).reindex(idx), pd.DataFrame(close).reindex(idx))
+        print(f"  trend data stale (latest {latest} < expected {exp}); "
+              f"refetching in 30s (attempt {attempt + 1}/4)...")
+        time.sleep(30)
 
 
 # --------------------------------------------------------------------------- #
