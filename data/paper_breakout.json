@@ -110,6 +110,32 @@
       "value": 8760.72
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "ADP",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "TRV",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "WDAY",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "RTX",
+      "reason": "data gap"
+    },
+    {
+      "side": "SELL",
+      "ticker": "F",
+      "reason": "data gap"
+    }
+  ],
   "last_close": "2026-08-03"
 }
