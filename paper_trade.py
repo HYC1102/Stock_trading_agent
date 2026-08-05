@@ -75,10 +75,14 @@ def _plan(st, asof, prices, P, regime):
     pending, sells = [], set()
     for tk, p in st["positions"].items():
         c = cl.get(tk, np.nan)
-        lvl, rule = stop_level(p, tk, prices)
-        if not np.isfinite(c) or c < lvl:
-            pending.append(dict(side="SELL", ticker=tk,
-                                reason="data gap" if not np.isfinite(c) else rule))
+        if not np.isfinite(c):
+            continue                       # transient data gap -> HOLD, never force-sell
+        try:
+            lvl, rule = stop_level(p, tk, prices)
+        except Exception:  # noqa: BLE001
+            continue                       # can't compute a stop (missing history) -> hold
+        if np.isfinite(lvl) and c < lvl:   # only a genuine, finite stop breach exits
+            pending.append(dict(side="SELL", ticker=tk, reason=rule))
             sells.add(tk)
     free = bs.CONFIG["slots"] - (len(st["positions"]) - len(sells))
     reg = bool(regime.get(asof, False)) if regime is not None else True
