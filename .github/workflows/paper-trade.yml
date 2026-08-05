@@ -64,6 +64,7 @@ jobs:
           for f in data/paper_breakout.json data/paper_trades.csv data/paper_equity.csv; do
             [ -f "$f" ] && git add "$f"
           done
+          git add data/extras_*.json 2>/dev/null || true   # weekly discovered universe (persists the cache)
           if git diff --cached --quiet; then
             echo "No paper-state changes to commit."
           else

@@ -19,6 +19,7 @@ Honest-data caveats:
 from __future__ import annotations
 
 import io
+import json
 import os
 import time
 import pickle
@@ -79,28 +80,91 @@ def sp500_tickers() -> list[str]:
     return sorted(_wiki_tickers("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"))
 
 
-# High-volume US-listed names that trade heavily but sit OUTSIDE the S&P 500
-# (big ADRs, recent listings, retail favourites). Curated because a true
-# "all US stocks by dollar volume" ranking needs a full-market feed.
-EXTRAS = [
-    # retail / meme / high-turnover
-    "GME", "AMC", "SOFI", "RIVN", "LCID", "MARA", "RIOT", "RBLX", "SNAP",
-    "PINS", "DKNG", "AFRM", "UPST", "PLUG", "CHPT", "RUN", "ROKU", "HIMS", "OSCR",
-    # large ADRs (Nasdaq-100 / heavily traded)
-    "BABA", "PDD", "JD", "NIO", "LI", "XPEV", "BIDU", "NTES", "BILI", "GRAB",
-    "SE", "MELI", "SHOP", "ASML", "AZN", "NU", "TME",
-    # recent listings / high-volume growth
-    "ARM", "RDDT", "IONQ", "RGTI", "QBTS", "RKLB", "ASTS", "SOUN", "ACHR", "SMR",
-]
+def _screen(query, pages: int, custom: bool,
+            min_price: float = 5.0, min_dollar_vol: float = 100e6) -> dict[str, float]:
+    """Run one Yahoo screen (a predefined name, or a custom EquityQuery),
+    paginating 25 at a time, and map each liquid US common stock to its dollar
+    volume (price x 3-month avg share volume). Best-effort: returns what it got
+    if a page fails."""
+    out: dict[str, float] = {}
+    for off in range(0, pages * 25, 25):
+        try:
+            r = (yf.screen(query, sortField="dayvolume", sortAsc=False, offset=off, count=25)
+                 if custom else yf.screen(query, offset=off, count=25))
+        except Exception:  # noqa: BLE001
+            break
+        quotes = r.get("quotes", []) if isinstance(r, dict) else []
+        if not quotes:
+            break
+        for q in quotes:
+            if q.get("quoteType") != "EQUITY":                   # drop ETFs / funds
+                continue
+            exch = q.get("fullExchangeName") or ""
+            if "Nasdaq" not in exch and "NYSE" not in exch:      # US-listed only
+                continue
+            px = q.get("regularMarketPrice") or 0
+            vol = q.get("averageDailyVolume3Month") or q.get("regularMarketVolume") or 0
+            if px >= min_price and px * vol >= min_dollar_vol:
+                out[q["symbol"]] = px * vol
+    return out
+
+
+def _high_volume_us_stocks() -> dict[str, float]:
+    """US common stocks trading >= $100M/day, spanned by complementary Yahoo
+    screens -- no hand-curated list.
+
+    Yahoo only sorts by SHARE volume, so 'most actives' alone misses high-priced
+    names that trade few shares but huge dollars (ASML ~$3.4B/day, MELI ~$1B/day).
+    Price-bucketed screens fix that: a name expensive enough to be thin on shares
+    lands in a small, fully-paginable price bucket. Buckets: everything (most
+    actives), > $100, and > $500 (only ~60 names, but that is where MELI/ASML/NVR
+    live). Union, then rank by dollar volume."""
+    names = _screen("most_actives", pages=14, custom=False)
+    for min_px, pages in ((100, 18), (500, 6)):
+        q = yf.EquityQuery("and", [
+            yf.EquityQuery("gt", ["intradayprice", min_px]),
+            yf.EquityQuery("gt", ["dayvolume", 100_000]),
+            yf.EquityQuery("eq", ["region", "us"]),
+        ])
+        names.update(_screen(q, pages=pages, custom=True))
+    return names
+
+
+def discover_extras(cap: int = 200) -> list[str]:
+    """High-volume US stocks OUTSIDE the S&P 500, discovered WEEKLY and ranked by
+    dollar volume -- entirely from Yahoo's screener, no hand-curated list.
+
+    Cached per ISO week in data/extras_YYYYWww.json (the workflow commits it, so
+    it is genuinely weekly on the live system). On a total screen failure it
+    returns [] and broad_universe() degrades to the S&P 500 alone (or the last
+    cached week, if present). Still survivorship-biased -- today's live names."""
+    yr, wk, _ = dt.date.today().isocalendar()
+    cache = os.path.join(CONFIG["cache_dir"], f"extras_{yr}W{wk:02d}.json")
+    if os.path.exists(cache):
+        try:
+            with open(cache) as f:
+                return json.load(f)
+        except Exception:  # noqa: BLE001
+            pass
+    sp = set(sp500_tickers())
+    dv = _high_volume_us_stocks()
+    non_sp = sorted((t for t in dv if t not in sp), key=dv.get, reverse=True)[:cap]
+    if non_sp:                                       # only cache a successful screen
+        os.makedirs(CONFIG["cache_dir"], exist_ok=True)
+        try:
+            with open(cache, "w") as f:
+                json.dump(non_sp, f)
+        except Exception:  # noqa: BLE001
+            pass
+    return non_sp
 
 
 def broad_universe() -> list[str]:
-    """Approximate the liquid US-stock universe: S&P 500 + high-volume non-index
-    names (ADRs, recent listings, retail favourites). A true 'all US stocks by
-    volume' needs a full-market feed; this is the best free proxy. The weekly ADV
-    ranking then keeps the top `universe_size`. (Nasdaq-100 overlaps the S&P 500
-    almost entirely; its unique names are covered by EXTRAS.)"""
-    return sorted(set(sp500_tickers()) | set(EXTRAS))
+    """Candidate pool = current S&P 500 + weekly-discovered high-volume non-index
+    names. A true 'all US stocks by volume' needs a full-market feed; this is the
+    best free proxy. The 60-day-ADV cut in build_universe() then keeps the top
+    `universe_size`."""
+    return sorted(set(sp500_tickers()) | set(discover_extras()))
 
 
 def download_prices(tickers: list[str], period: str = "400d") -> dict[str, pd.DataFrame]:
