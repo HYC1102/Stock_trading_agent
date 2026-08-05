@@ -80,61 +80,17 @@ def sp500_tickers() -> list[str]:
     return sorted(_wiki_tickers("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"))
 
 
-# High-volume US-listed names that trade heavily but sit OUTSIDE the S&P 500
-# (big ADRs, recent listings, retail favourites). Curated because a true
-# "all US stocks by dollar volume" ranking needs a full-market feed.
-# Curated FLOOR of high-volume US names outside the S&P 500. discover_extras()
-# unions this with a live weekly screen, so this list only has to guarantee that
-# known high-$-volume names persist even if the screener misses them (e.g. it
-# ranks by share volume, so high-priced-low-turnover ADRs can slip through).
-# Still survivorship-biased (today's names) -- it widens the live pool, it does
-# not fix the historical bias.
-CURATED_EXTRAS = [
-    # retail / meme / high-turnover
-    "GME", "AMC", "SOFI", "RIVN", "LCID", "RBLX", "SNAP", "PINS", "DKNG",
-    "AFRM", "UPST", "PLUG", "CHPT", "RUN", "ROKU", "HIMS", "OSCR", "HOOD",
-    "CVNA", "OPEN", "LYFT", "PTON", "WBD", "PARA", "DJT", "RKT", "FUBO",
-    "CLOV", "SPCE", "BYND", "DNUT", "CHWY", "W", "LAZR",
-    # China / Asia ADRs
-    "BABA", "PDD", "JD", "NIO", "LI", "XPEV", "BIDU", "NTES", "BILI", "GRAB",
-    "SE", "TME", "TCOM", "IQ", "VIPS", "ZTO", "BEKE", "FUTU", "TIGR", "EDU",
-    "TAL", "WB", "QFIN", "LU", "MNSO", "ZH",
-    # other global ADRs (Europe / LatAm / Asia / Israel)
-    "MELI", "SHOP", "ASML", "AZN", "NU", "TSM", "NVO", "TM", "SONY", "STLA",
-    "SHEL", "BP", "RIO", "BHP", "VALE", "ITUB", "BBD", "PBR", "ABEV", "TEVA",
-    "WIX", "GLBE", "MNDY", "NICE", "CYBR", "INFY", "UMC", "ASX", "STM",
-    # crypto / blockchain miners
-    "MARA", "RIOT", "MSTR", "COIN", "CLSK", "HUT", "BITF", "WULF", "CIFR",
-    "IREN", "BTBT", "HIVE", "CORZ", "APLD", "BMNR",
-    # recent listings / de-SPAC / AI / space / growth
-    "ARM", "RDDT", "IONQ", "RGTI", "QBTS", "RKLB", "ASTS", "SOUN", "ACHR",
-    "SMR", "OKLO", "NNE", "CRWV", "ALAB", "TEM", "CRDO", "RBRK", "CART",
-    "KVYO", "TOST", "CAVA", "BROS", "BIRK", "LUNR", "DUOL", "GTLB", "S",
-    "PATH", "U", "AI", "BBAI", "SERV",
-    # biotech (volatile / high-volume)
-    "VKTX", "SAVA", "CRSP", "BEAM", "NTLA", "RXRX", "DNA", "NVAX", "OCGN",
-    "IONS", "ARWR", "CYTK", "AXSM", "TGTX", "MRNA",
-    # EV / clean energy / nuclear / uranium
-    "QS", "SEDG", "BE", "CCJ", "UEC", "UUUU", "DNN", "LEU", "LAC", "FCEL",
-    "BLNK",
-    # gold / silver / materials miners
-    "GOLD", "KGC", "AG", "HL", "CDE", "NGD", "BTG", "HMY", "GFI", "SBSW",
-    "PAAS", "AA", "CLF", "CENX", "X", "RIG",
-    # telecom / other high-volume
-    "NOK", "ERIC", "VOD",
-]
-
-
-def _screen_most_active(min_price: float = 5.0, min_dollar_vol: float = 100e6,
-                        pages: int = 14) -> dict[str, float]:
-    """US common stocks from Yahoo's 'most actives' screener, mapped to their
-    dollar volume (price x 3-month avg share volume). Yahoo caps the page at 25,
-    so we paginate by `offset`. Best-effort: returns whatever it fetched if a
-    page fails."""
+def _screen(query, pages: int, custom: bool,
+            min_price: float = 5.0, min_dollar_vol: float = 100e6) -> dict[str, float]:
+    """Run one Yahoo screen (a predefined name, or a custom EquityQuery),
+    paginating 25 at a time, and map each liquid US common stock to its dollar
+    volume (price x 3-month avg share volume). Best-effort: returns what it got
+    if a page fails."""
     out: dict[str, float] = {}
     for off in range(0, pages * 25, 25):
         try:
-            r = yf.screen("most_actives", offset=off, count=25)
+            r = (yf.screen(query, sortField="dayvolume", sortAsc=False, offset=off, count=25)
+                 if custom else yf.screen(query, offset=off, count=25))
         except Exception:  # noqa: BLE001
             break
         quotes = r.get("quotes", []) if isinstance(r, dict) else []
@@ -153,14 +109,35 @@ def _screen_most_active(min_price: float = 5.0, min_dollar_vol: float = 100e6,
     return out
 
 
-def discover_extras(cap: int = 160) -> list[str]:
-    """High-volume US stocks OUTSIDE the S&P 500, refreshed WEEKLY.
+def _high_volume_us_stocks() -> dict[str, float]:
+    """US common stocks trading >= $100M/day, spanned by complementary Yahoo
+    screens -- no hand-curated list.
 
-    Pulls Yahoo's most-actives screen, keeps liquid US equities not already in
-    the S&P, ranks them by dollar volume, and unions the top `cap` with the
-    curated floor (so known high-$-volume names always persist). Cached per ISO
-    week in data/extras_YYYYWww.json; if the screener is unavailable it falls
-    back to CURATED_EXTRAS alone (and does not cache, so it retries next run)."""
+    Yahoo only sorts by SHARE volume, so 'most actives' alone misses high-priced
+    names that trade few shares but huge dollars (ASML ~$3.4B/day, MELI ~$1B/day).
+    Price-bucketed screens fix that: a name expensive enough to be thin on shares
+    lands in a small, fully-paginable price bucket. Buckets: everything (most
+    actives), > $100, and > $500 (only ~60 names, but that is where MELI/ASML/NVR
+    live). Union, then rank by dollar volume."""
+    names = _screen("most_actives", pages=14, custom=False)
+    for min_px, pages in ((100, 18), (500, 6)):
+        q = yf.EquityQuery("and", [
+            yf.EquityQuery("gt", ["intradayprice", min_px]),
+            yf.EquityQuery("gt", ["dayvolume", 100_000]),
+            yf.EquityQuery("eq", ["region", "us"]),
+        ])
+        names.update(_screen(q, pages=pages, custom=True))
+    return names
+
+
+def discover_extras(cap: int = 200) -> list[str]:
+    """High-volume US stocks OUTSIDE the S&P 500, discovered WEEKLY and ranked by
+    dollar volume -- entirely from Yahoo's screener, no hand-curated list.
+
+    Cached per ISO week in data/extras_YYYYWww.json (the workflow commits it, so
+    it is genuinely weekly on the live system). On a total screen failure it
+    returns [] and broad_universe() degrades to the S&P 500 alone (or the last
+    cached week, if present). Still survivorship-biased -- today's live names."""
     yr, wk, _ = dt.date.today().isocalendar()
     cache = os.path.join(CONFIG["cache_dir"], f"extras_{yr}W{wk:02d}.json")
     if os.path.exists(cache):
@@ -170,18 +147,16 @@ def discover_extras(cap: int = 160) -> list[str]:
         except Exception:  # noqa: BLE001
             pass
     sp = set(sp500_tickers())
-    screened = _screen_most_active()
-    non_sp = sorted((t for t in screened if t not in sp),
-                    key=screened.get, reverse=True)[:cap]
-    result = sorted(set(non_sp) | set(CURATED_EXTRAS))
+    dv = _high_volume_us_stocks()
+    non_sp = sorted((t for t in dv if t not in sp), key=dv.get, reverse=True)[:cap]
     if non_sp:                                       # only cache a successful screen
         os.makedirs(CONFIG["cache_dir"], exist_ok=True)
         try:
             with open(cache, "w") as f:
-                json.dump(result, f)
+                json.dump(non_sp, f)
         except Exception:  # noqa: BLE001
             pass
-    return result
+    return non_sp
 
 
 def broad_universe() -> list[str]:
