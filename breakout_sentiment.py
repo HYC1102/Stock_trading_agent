@@ -82,15 +82,45 @@ def sp500_tickers() -> list[str]:
 # High-volume US-listed names that trade heavily but sit OUTSIDE the S&P 500
 # (big ADRs, recent listings, retail favourites). Curated because a true
 # "all US stocks by dollar volume" ranking needs a full-market feed.
+# High-volume US-listed names that trade heavily but sit OUTSIDE the S&P 500.
+# This is deliberately generous: the set-union with the S&P dedupes overlaps,
+# the 60-day-ADV top-`universe_size` cut drops anything not actually liquid, and
+# tickers with no data are skipped on download -- so a broad list only helps the
+# ranking see the real high-volume universe. Still survivorship-biased (today's
+# names), so it does not fix the historical bias -- it widens the live pool.
 EXTRAS = [
     # retail / meme / high-turnover
-    "GME", "AMC", "SOFI", "RIVN", "LCID", "MARA", "RIOT", "RBLX", "SNAP",
-    "PINS", "DKNG", "AFRM", "UPST", "PLUG", "CHPT", "RUN", "ROKU", "HIMS", "OSCR",
-    # large ADRs (Nasdaq-100 / heavily traded)
+    "GME", "AMC", "SOFI", "RIVN", "LCID", "RBLX", "SNAP", "PINS", "DKNG",
+    "AFRM", "UPST", "PLUG", "CHPT", "RUN", "ROKU", "HIMS", "OSCR", "HOOD",
+    "CVNA", "OPEN", "LYFT", "PTON", "WBD", "PARA", "DJT", "RKT", "FUBO",
+    "CLOV", "SPCE", "BYND", "DNUT", "CHWY", "W", "LAZR",
+    # China / Asia ADRs
     "BABA", "PDD", "JD", "NIO", "LI", "XPEV", "BIDU", "NTES", "BILI", "GRAB",
-    "SE", "MELI", "SHOP", "ASML", "AZN", "NU", "TME",
-    # recent listings / high-volume growth
-    "ARM", "RDDT", "IONQ", "RGTI", "QBTS", "RKLB", "ASTS", "SOUN", "ACHR", "SMR",
+    "SE", "TME", "TCOM", "IQ", "VIPS", "ZTO", "BEKE", "FUTU", "TIGR", "EDU",
+    "TAL", "WB", "QFIN", "LU", "MNSO", "ZH",
+    # other global ADRs (Europe / LatAm / Asia / Israel)
+    "MELI", "SHOP", "ASML", "AZN", "NU", "TSM", "NVO", "TM", "SONY", "STLA",
+    "SHEL", "BP", "RIO", "BHP", "VALE", "ITUB", "BBD", "PBR", "ABEV", "TEVA",
+    "WIX", "GLBE", "MNDY", "NICE", "CYBR", "INFY", "UMC", "ASX", "STM",
+    # crypto / blockchain miners
+    "MARA", "RIOT", "MSTR", "COIN", "CLSK", "HUT", "BITF", "WULF", "CIFR",
+    "IREN", "BTBT", "HIVE", "CORZ", "APLD", "BMNR",
+    # recent listings / de-SPAC / AI / space / growth
+    "ARM", "RDDT", "IONQ", "RGTI", "QBTS", "RKLB", "ASTS", "SOUN", "ACHR",
+    "SMR", "OKLO", "NNE", "CRWV", "ALAB", "TEM", "CRDO", "RBRK", "CART",
+    "KVYO", "TOST", "CAVA", "BROS", "BIRK", "LUNR", "DUOL", "GTLB", "S",
+    "PATH", "U", "AI", "BBAI", "SERV",
+    # biotech (volatile / high-volume)
+    "VKTX", "SAVA", "CRSP", "BEAM", "NTLA", "RXRX", "DNA", "NVAX", "OCGN",
+    "IONS", "ARWR", "CYTK", "AXSM", "TGTX", "MRNA",
+    # EV / clean energy / nuclear / uranium
+    "QS", "SEDG", "BE", "CCJ", "UEC", "UUUU", "DNN", "LEU", "LAC", "FCEL",
+    "BLNK",
+    # gold / silver / materials miners
+    "GOLD", "KGC", "AG", "HL", "CDE", "NGD", "BTG", "HMY", "GFI", "SBSW",
+    "PAAS", "AA", "CLF", "CENX", "X", "RIG",
+    # telecom / other high-volume
+    "NOK", "ERIC", "VOD",
 ]
 
 
