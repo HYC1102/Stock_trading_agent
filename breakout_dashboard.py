@@ -49,6 +49,12 @@ tr:last-child td{border-bottom:none}
 .tag{font-size:11px;color:var(--amber);background:#fdf6e9;padding:1px 7px;border-radius:10px}
 .act{background:#f2f7fd;border:1px solid #d7e6f7;border-radius:10px;padding:14px 16px;margin:14px 0}
 .foot{color:var(--mut);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+.tg{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 13px;font-size:13px;
+cursor:pointer;margin-right:6px;color:var(--mut)}
+.tg.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.leg{display:inline-flex;gap:14px;font-size:12px;color:var(--mut);margin-left:6px}
+.leg span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:13px;height:3px;display:inline-block}
 """
 
 
@@ -155,10 +161,23 @@ def build(capital: float, start: str):
                                    for c in closed]) if closed else float("nan"),
                  n_closed=len(closed))
 
+    # SPY benchmark, rebased to the account's starting capital, aligned to the
+    # equity log's dates -- for the chart's Strategy-vs-SPY comparison.
+    spy_line = []
+    if started:
+        try:
+            spy_full = trend.load_prices("SPY", st["start_date"])["Close"]
+            dates = pd.to_datetime([e["date"] for e in st["equity"]])
+            spy_close = spy_full.reindex(spy_full.index.union(dates)).ffill().reindex(dates)
+            if spy_close.notna().all() and spy_close.iloc[0] > 0:
+                spy_line = list((st["capital"] * spy_close / spy_close.iloc[0]).round(2))
+        except Exception:  # noqa: BLE001
+            spy_line = []
+
     cand = bs.rank_breakouts(prices, bs.build_universe(prices))
     return dict(capital=st["capital"], start=st["start_date"], asof=asof, started=started,
                 value=value, positions=positions, pending=st["pending"], trades=st["trades"],
-                equity=st["equity"], cand=cand, m=m)
+                equity=st["equity"], cand=cand, m=m, spy_line=spy_line)
 
 
 def html(s) -> str:
@@ -258,18 +277,47 @@ def html(s) -> str:
     else:
         trades_html = '<p class="sub">No trades yet — the log fills from the first session.</p>'
 
-    # equity chart (once there is a track record)
+    # equity chart (once there is a track record): value/return toggle, vs SPY
     chart = ""
     if len(s["equity"]) >= 2:
         ed = json.dumps([e["date"][5:] for e in s["equity"]])
         ev = json.dumps([e["value"] for e in s["equity"]])
-        chart = (f'<div style="position:relative;height:220px"><canvas id="eq"></canvas></div>'
-                 f'<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>'
-                 f'<script>new Chart(document.getElementById("eq"),{{type:"line",'
-                 f'data:{{labels:{ed},datasets:[{{label:"Account",data:{ev},borderColor:"#2a78d6",'
-                 f'borderWidth:2,pointRadius:0,tension:.1}}]}},options:{{responsive:true,'
-                 f'maintainAspectRatio:false,plugins:{{legend:{{display:false}}}},'
-                 f'scales:{{y:{{ticks:{{callback:v=>"$"+(v/1000).toFixed(1)+"k"}}}}}}}}}});</script>')
+        spy = s.get("spy_line") or []
+        has_spy = len(spy) == len(s["equity"])
+        spy_j = json.dumps(spy)
+        spy_dataset = (',{label:"SPY",data:SPY,borderColor:"#898781",borderDash:[4,3],'
+                       'borderWidth:1.5,pointRadius:0,tension:.1}') if has_spy else ""
+        spy_var = f",SPY={spy_j}" if has_spy else ""
+        spy_return_line = 'ch.data.datasets[1].data=m==="return"?rb(SPY):SPY;' if has_spy else ""
+        spy_legend = ('<span><span class="sw" style="background:#898781"></span>SPY</span>'
+                      if has_spy else "")
+        chart = (
+            '<div style="margin:6px 0 10px">'
+            '<button id="bV" class="tg on">Account value ($)</button>'
+            '<button id="bR" class="tg">Return (%)</button>'
+            f'<span class="leg"><span><span class="sw" style="background:#2a78d6"></span>Strategy</span>'
+            f'{spy_legend}</span></div>'
+            '<div style="position:relative;height:220px"><canvas id="eq"></canvas></div>'
+            '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>'
+            f'<script>const ED={ed},EV={ev}{spy_var};'
+            'const vfmt=v=>"$"+Math.round(v).toLocaleString(),rfmt=v=>v.toFixed(1)+"%";'
+            'const rb=a=>a.map(v=>(v/a[0]-1)*100);let mode="value";'
+            'const ch=new Chart(document.getElementById("eq"),{type:"line",'
+            'data:{labels:ED,datasets:[{label:"Strategy",data:EV,borderColor:"#2a78d6",'
+            f'borderWidth:2,pointRadius:0,tension:.1}}{spy_dataset}]}},'
+            'options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},'
+            'tooltip:{callbacks:{label:c=>c.dataset.label+": "+(mode==="value"?'
+            '"$"+Math.round(c.parsed.y).toLocaleString():c.parsed.y.toFixed(1)+"%")}}},'
+            'scales:{y:{ticks:{color:"#898781",callback:vfmt},grid:{color:"#e6e4dd"}},'
+            'x:{ticks:{color:"#898781",maxTicksLimit:8},grid:{display:false}}}}});'
+            'function setMode(m){mode=m;'
+            'ch.data.datasets[0].data=m==="return"?rb(EV):EV;'
+            f'{spy_return_line}'
+            'ch.options.scales.y.ticks.callback=m==="return"?rfmt:vfmt;ch.update();'
+            'document.getElementById("bV").classList.toggle("on",m==="value");'
+            'document.getElementById("bR").classList.toggle("on",m==="return");}'
+            'document.getElementById("bV").onclick=()=>setMode("value");'
+            'document.getElementById("bR").onclick=()=>setMode("return");</script>')
 
     meas = ""
     if s["started"]:

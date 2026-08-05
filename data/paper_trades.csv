@@ -1,6 +1,0 @@
-date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
-2026-07-30,BUY,ADP,6.626,265.62,1760.0,breakout,96.0,62.4,82.6
-2026-07-30,BUY,TRV,4.556,386.27,1760.0,breakout,92.0,64.5,81.0
-2026-07-30,BUY,WDAY,11.138,158.02,1760.0,breakout,100.0,45.5,78.2
-2026-07-30,BUY,RTX,8.205,214.5,1760.0,breakout,84.0,60.7,74.7
-2026-07-30,BUY,F,114.618,15.34,1758.24,breakout,88.0,52.9,74.0
