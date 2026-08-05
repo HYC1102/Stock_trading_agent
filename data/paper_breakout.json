@@ -146,35 +146,35 @@
   "pending": [
     {
       "side": "BUY",
-      "ticker": "NTAP",
-      "price_hint": 190.46,
+      "ticker": "SNOW",
+      "price_hint": 316.77,
       "momentum": 100.0,
-      "sentiment": 53.9,
-      "combined": 81.6
+      "sentiment": 64.7,
+      "combined": 85.9
+    },
+    {
+      "side": "BUY",
+      "ticker": "PATH",
+      "price_hint": 14.1,
+      "momentum": 87.5,
+      "sentiment": 64.6,
+      "combined": 78.3
     },
     {
       "side": "BUY",
       "ticker": "MSFT",
       "price_hint": 492.81,
-      "momentum": 87.5,
-      "sentiment": 53.9,
-      "combined": 74.1
+      "momentum": 75.0,
+      "sentiment": 53.2,
+      "combined": 66.3
     },
     {
       "side": "BUY",
       "ticker": "PLTR",
       "price_hint": 162.66,
-      "momentum": 75.0,
-      "sentiment": 52.2,
-      "combined": 65.9
-    },
-    {
-      "side": "BUY",
-      "ticker": "CTSH",
-      "price_hint": 56.13,
       "momentum": 62.5,
-      "sentiment": 54.4,
-      "combined": 59.3
+      "sentiment": 50.9,
+      "combined": 57.9
     },
     {
       "side": "BUY",
