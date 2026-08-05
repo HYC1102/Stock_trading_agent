@@ -23,6 +23,7 @@ import yfinance as yf
 
 import breakout_sentiment as bs
 import paper_trade as pt
+import strategy as trend            # reuse its Tiingo price adapter
 
 CSS = """
 :root{--bg:#fbfbfa;--card:#fff;--ink:#1a1a19;--mut:#6b6a66;--line:#e6e4dd;
@@ -68,6 +69,38 @@ def episodes(trades):
     return closed
 
 
+def overlay_tiingo(prices, P, names) -> list[str]:
+    """Replace yfinance OHLC with Tiingo's (more reliable) values for `names` --
+    the held positions and pending buys -- in BOTH the prices dict and the P
+    panels, so marks, stops and fills use Tiingo. The bulk 223-name breakout scan
+    (detection + ranking) stays on yfinance. Per-cell fallback to yfinance where
+    Tiingo lacks a date; a no-op (returns []) if there is no Tiingo token."""
+    names = [t for t in dict.fromkeys(names) if t]        # de-dupe, keep order
+    if not names:
+        return []
+    idx = P["close"].index
+    start = str((idx[-1] - pd.Timedelta(days=400)).date())  # enough for stops + recent marks
+    used = []
+    for tk in names:
+        try:
+            tg = trend._tiingo_prices(tk, start)
+        except Exception:  # noqa: BLE001
+            tg = None
+        if tg is None or tg.empty:
+            continue
+        for field, col in (("open", "Open"), ("close", "Close"),
+                           ("high", "High"), ("low", "Low")):
+            if tk in P[field].columns:
+                P[field][tk] = tg[col].reindex(idx).fillna(P[field][tk])
+        if tk in prices:
+            df = prices[tk].copy()
+            for col in ("Open", "High", "Low", "Close"):
+                df[col] = tg[col].reindex(df.index).fillna(df[col])
+            prices[tk] = df
+        used.append(tk)
+    return used
+
+
 def build(capital: float, start: str):
     bs.CONFIG.update(sizing="slots", slots=5, regime=True, rank_mode="proxy",
                      atr_stop=1.5, exit_low=10, use_exit_low=True, pct_stop=None,
@@ -79,6 +112,14 @@ def build(capital: float, start: str):
     regime = bs.spy_regime(P["close"].index)
 
     st = pt.load_state() or pt.init_state(start, capital)
+    # Route the decision-critical few (held + pending buys) through Tiingo, so
+    # marks/stops/fills use reliable prices while the 223-name scan stays on
+    # yfinance (Tiingo's free tier can't do 223 queries).
+    overlay = set(st["positions"]) | {o["ticker"] for o in st.get("pending", [])
+                                      if o.get("side") == "BUY"}
+    tiingo_names = overlay_tiingo(prices, P, overlay)
+    if tiingo_names:
+        print(f"  Tiingo prices for {len(tiingo_names)} name(s): {', '.join(tiingo_names)}")
     st, asof = pt.advance(st, prices, P, regime)
     pt.save_state(st)
 
