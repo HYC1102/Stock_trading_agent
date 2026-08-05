@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import time
 
 import numpy as np
@@ -75,8 +76,53 @@ CONFIG = dict(
 # --------------------------------------------------------------------------- #
 # Data
 # --------------------------------------------------------------------------- #
+def _tiingo_token() -> str | None:
+    """Tiingo API token from $TIINGO_API_KEY, or a gitignored local file."""
+    tok = os.environ.get("TIINGO_API_KEY")
+    if tok and tok.strip():
+        return tok.strip()
+    for p in (".tiingo_token", os.path.join("data", "tiingo_token.txt")):
+        if os.path.exists(p):
+            with open(p) as f:
+                t = f.read().strip()
+                if t:
+                    return t
+    return None
+
+
+def _tiingo_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFrame | None:
+    """Split/dividend-adjusted daily OHLC from Tiingo, or None if unavailable
+    (no token, bad response, or error) so the caller can fall back to yfinance."""
+    tok = _tiingo_token()
+    if not tok:
+        return None
+    import requests
+    params = {"startDate": start, "token": tok, "format": "json"}
+    if end:
+        params["endDate"] = end
+    try:
+        r = requests.get(f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
+                         params=params, timeout=30)
+        if r.status_code != 200:
+            return None
+        rows = r.json()
+        if not rows:
+            return None
+        df = pd.DataFrame(rows)
+        df.index = pd.to_datetime(df["date"], utc=True).dt.tz_localize(None).dt.normalize()
+        out = pd.DataFrame({"Open": df["adjOpen"], "High": df["adjHigh"],
+                            "Low": df["adjLow"], "Close": df["adjClose"]}, index=df.index)
+        return out.sort_index().dropna()
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 3) -> pd.DataFrame:
-    import time
+    # Primary: Tiingo (a real API contract -- reliable, no stale-response lottery).
+    tg = _tiingo_prices(ticker, start, end)
+    if tg is not None and not tg.empty:
+        return tg
+    # Fallback: yfinance (free but flaky; keeps working with no Tiingo token).
     last = None
     for attempt in range(retries):
         try:

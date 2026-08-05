@@ -14,3 +14,7 @@ data/cron.log
 _site/
 dashboard.html
 breakout_dashboard.html
+
+# Tiingo API token (never commit)
+.tiingo_token
+data/tiingo_token.txt
