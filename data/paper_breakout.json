@@ -157,16 +157,16 @@
       "ticker": "MSFT",
       "price_hint": 492.81,
       "momentum": 87.5,
-      "sentiment": 59.6,
-      "combined": 76.3
+      "sentiment": 52.6,
+      "combined": 73.5
     },
     {
       "side": "BUY",
       "ticker": "PLTR",
       "price_hint": 162.66,
       "momentum": 75.0,
-      "sentiment": 56.9,
-      "combined": 67.8
+      "sentiment": 56.6,
+      "combined": 67.6
     },
     {
       "side": "BUY",
