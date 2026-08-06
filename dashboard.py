@@ -39,6 +39,8 @@ color:#fff;font-size:12px;font-weight:500;min-width:30px}
 .brow{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:10px;margin:6px 0;font-size:13px}
 .brow .lab{color:var(--mut)}.brow .val{text-align:right;font-variant-numeric:tabular-nums}
 .buy{color:var(--green);font-weight:600}.sell{color:var(--red);font-weight:600}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.src{font-size:11px;color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
 .pill{display:inline-block;background:#eef4fb;color:var(--blue);font-size:12px;padding:2px 9px;border-radius:20px}
 .tg{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 13px;font-size:13px;
@@ -125,6 +127,7 @@ def next_monday():
 def build_html(s, fresh=False, start_date=None, track_date=None):
     m = s["metrics"]; cap = s["capital"]
     since = start_date or track_date          # inception for the account cards / start pill
+    rc = lambda x: "pos" if x >= 0 else "neg"
     colors = ["#2a78d6", "#1baf7a", "#c98500", "#8a63d2", "#d95f2b", "#4a9",
               "#e07a9a", "#5f9ea0", "#b07d3a"]
 
@@ -168,15 +171,34 @@ def build_html(s, fresh=False, start_date=None, track_date=None):
             f'<td class="n"></td><td class="n"></td></tr></table>')
         book_rows = ""; trades_html = ""
     else:
-        book_rows = "".join(
-            f'<tr><td>{t}</td><td>{s["universe"].get(t,"")}</td>'
-            f'<td class="n">{w/cap*100:.1f}%</td><td class="n">${w:,.0f}</td></tr>'
-            for t, w in s["book"].items())
+        entries = s.get("entries", {}); sources = s.get("sources", {})
+        asof_t = s.get("asof_per_ticker", {})
+        rows = []
+        for t, w in s["book"].items():
+            px = s["prices"].get(t)
+            ed, ep = entries.get(t, (None, None))
+            if ep and px:
+                pct = px / ep - 1
+                dollar = w * pct / (1 + pct) if (1 + pct) else 0.0
+                gain_cell = (f'<td class="n {rc(pct)}">{pct*100:+.1f}%</td>'
+                            f'<td class="n {rc(dollar)}">${dollar:+,.0f}</td>')
+            else:
+                gain_cell = '<td class="n">&mdash;</td><td class="n">&mdash;</td>'
+            src = sources.get(t, "&mdash;")
+            ad = asof_t.get(t)
+            src_cell = f'{src}<br><span class="src">{ad:%d %b %y}</span>' if ad else src
+            rows.append(f'<tr><td>{t}</td><td>{s["universe"].get(t,"")}</td>'
+                       f'<td class="n">{w/cap*100:.1f}%</td><td class="n">${w:,.0f}</td>'
+                       f'{gain_cell}<td>{src_cell}</td></tr>')
+        book_rows = "".join(rows)
         actions_html = (
             '<h2>Today\'s actions</h2>'
-            '<p class="sub">Target book — hold these weights (buy the full list if starting fresh)</p>'
+            '<p class="sub">Target book — hold these weights (buy the full list if starting fresh). '
+            'Gain/loss is since each name\'s last breakout entry, on its current target size -- '
+            'illustrative given continuous rebalancing, not a realized-P&amp;L reconstruction.</p>'
             f'<table><tr><th>Ticker</th><th>Asset class</th><th class="n">Weight</th>'
-            f'<th class="n">Amount</th></tr>{book_rows}</table>')
+            f'<th class="n">Amount</th><th class="n">Gain %</th><th class="n">Gain $</th>'
+            f'<th>Source / as of</th></tr>{book_rows}</table>')
 
     if not fresh and not s["trades"].empty:
         tr = "".join(

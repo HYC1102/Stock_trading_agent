@@ -137,10 +137,14 @@ def build(capital: float, start: str):
     for tk, p in st["positions"].items():
         px = float(P["close"].loc[asof, tk])
         stop, rule = pt.stop_level(p, tk, prices)
+        last_dt = prices[tk]["Close"].last_valid_index()
         positions.append(dict(ticker=tk, shares=p["shares"], entry=p["entry"],
                               entry_date=p["entry_date"], price=px, value=p["shares"] * px,
+                              pnl=p["shares"] * (px - p["entry"]),
                               ret=px / p["entry"] - 1, stop=stop, stop_rule=rule,
-                              room=px / stop - 1 if stop > 0 else 0))
+                              room=px / stop - 1 if stop > 0 else 0,
+                              source="Tiingo" if tk in tiingo_names else "yfinance",
+                              asof_date=last_dt.date() if last_dt is not None else None))
     positions.sort(key=lambda x: -x["value"])
 
     # measures from the forward equity log
@@ -247,16 +251,23 @@ def html(s) -> str:
 
     # positions
     if s["positions"]:
-        prows = "".join(
-            f'<tr><td><b>{p["ticker"]}</b></td><td class="n">{p["shares"]:.1f}</td>'
-            f'<td class="n">${p["entry"]:,.2f}</td><td class="n">${p["price"]:,.2f}</td>'
-            f'<td class="n">${p["stop"]:,.2f}<br><span style="font-size:10px;color:var(--mut)">{p["stop_rule"]}</span></td>'
-            f'<td class="n {roomcls(p["room"])}">{p["room"]*100:+.1f}%</td>'
-            f'<td class="n">${p["value"]:,.0f}</td>'
-            f'<td class="n {rc(p["ret"])}">{p["ret"]*100:+.1f}%</td></tr>' for p in s["positions"])
+        def prow(p):
+            src_cell = (f'{p["source"]}<br><span style="font-size:10px;color:var(--mut)">'
+                       f'{p["asof_date"]:%d %b %y}</span>' if p["asof_date"] else p["source"])
+            return (f'<tr><td><b>{p["ticker"]}</b></td><td class="n">{p["shares"]:.1f}</td>'
+                   f'<td class="n">${p["entry"]:,.2f}</td><td class="n">${p["price"]:,.2f}</td>'
+                   f'<td class="n">${p["stop"]:,.2f}<br><span style="font-size:10px;color:var(--mut)">'
+                   f'{p["stop_rule"]}</span></td>'
+                   f'<td class="n {roomcls(p["room"])}">{p["room"]*100:+.1f}%</td>'
+                   f'<td class="n">${p["value"]:,.0f}</td>'
+                   f'<td class="n {rc(p["ret"])}">{p["ret"]*100:+.1f}%</td>'
+                   f'<td class="n {rc(p["pnl"])}">${p["pnl"]:+,.0f}</td>'
+                   f'<td>{src_cell}</td></tr>')
+        prows = "".join(prow(p) for p in s["positions"])
         pos_html = (f'<table><tr><th>Ticker</th><th class="n">Shares</th><th class="n">Entry</th>'
                     f'<th class="n">Price</th><th class="n">Stop</th><th class="n">Room</th>'
-                    f'<th class="n">Value</th><th class="n">P&L</th></tr>{prows}</table>')
+                    f'<th class="n">Value</th><th class="n">Return</th><th class="n">P&amp;L $</th>'
+                    f'<th>Source / as of</th></tr>{prows}</table>')
     else:
         pos_html = '<p class="sub">No open positions yet.</p>'
 

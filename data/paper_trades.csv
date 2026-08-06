@@ -1,0 +1,6 @@
+date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
+2026-08-05,BUY,PATH,124.031,14.19,1760.0,breakout,100.0,64.6,85.8
+2026-08-05,BUY,MSFT,3.546,496.36,1760.0,breakout,85.7,53.2,72.7
+2026-08-05,BUY,PLTR,10.864,162.0,1760.0,breakout,71.4,50.9,63.2
+2026-08-05,BUY,BLK,1.546,1138.5,1760.0,breakout,57.1,49.2,54.0
+2026-08-05,BUY,REGN,2.289,767.98,1758.24,breakout,42.9,53.7,47.2
