@@ -128,8 +128,26 @@
     {
       "date": "2026-08-14",
       "value": 9269.16
+    },
+    {
+      "date": "2026-08-17",
+      "value": 9162.62
     }
   ],
-  "pending": [],
-  "last_close": "2026-08-14"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "MSFT",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "MPC",
+      "price_hint": 358.18,
+      "momentum": 100.0,
+      "sentiment": 59.2,
+      "combined": 83.7
+    }
+  ],
+  "last_close": "2026-08-17"
 }
