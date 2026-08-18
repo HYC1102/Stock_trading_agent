@@ -15,12 +15,6 @@
       "entry_date": "2026-08-05",
       "hi": 16.68
     },
-    "MSFT": {
-      "shares": 3.5458492409666467,
-      "entry": 496.36,
-      "entry_date": "2026-08-05",
-      "hi": 506.06
-    },
     "PLTR": {
       "shares": 10.864197530864198,
       "entry": 162.0,
@@ -32,6 +26,12 @@
       "entry": 1138.5,
       "entry_date": "2026-08-05",
       "hi": 1182.84
+    },
+    "MPC": {
+      "shares": 4.701111091191061,
+      "entry": 363.06,
+      "entry_date": "2026-08-18",
+      "hi": 366.21
     }
   },
   "trades": [
@@ -94,6 +94,30 @@
       "momentum": 50.0,
       "sentiment": 49.2,
       "combined": 49.7
+    },
+    {
+      "date": "2026-08-18",
+      "side": "SELL",
+      "ticker": "MSFT",
+      "shares": 3.546,
+      "price": 481.54,
+      "value": 1707.47,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-08-18",
+      "side": "BUY",
+      "ticker": "MPC",
+      "shares": 4.701,
+      "price": 363.06,
+      "value": 1706.79,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 59.2,
+      "combined": 83.7
     }
   ],
   "equity": [
@@ -132,22 +156,12 @@
     {
       "date": "2026-08-17",
       "value": 9162.62
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "MSFT",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "MPC",
-      "price_hint": 358.18,
-      "momentum": 100.0,
-      "sentiment": 59.2,
-      "combined": 83.7
+      "date": "2026-08-18",
+      "value": 9103.82
     }
   ],
-  "last_close": "2026-08-17"
+  "pending": [],
+  "last_close": "2026-08-18"
 }
