@@ -117,10 +117,14 @@ def _tiingo_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFr
         return None
 
 
+PRICE_SOURCE: dict[str, str] = {}   # ticker -> "Tiingo" | "yfinance", from the most recent load
+
+
 def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 3) -> pd.DataFrame:
     # Primary: Tiingo (a real API contract -- reliable, no stale-response lottery).
     tg = _tiingo_prices(ticker, start, end)
     if tg is not None and not tg.empty:
+        PRICE_SOURCE[ticker] = "Tiingo"
         return tg
     # Fallback: yfinance (free but flaky; keeps working with no Tiingo token).
     last = None
@@ -130,6 +134,7 @@ def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 
             if df is not None and not df.empty:
                 if isinstance(df.columns, pd.MultiIndex):
                     df.columns = df.columns.get_level_values(0)
+                PRICE_SOURCE[ticker] = "yfinance"
                 return df[["Open", "High", "Low", "Close"]].dropna()
         except Exception as exc:  # noqa: BLE001
             last = exc
@@ -149,6 +154,7 @@ def build_panels(start: str, end: str | None = None):
     exp = _expected_last_session() if end is None else None
     for attempt in range(4):
         sig, oret, vol, close = {}, {}, {}, {}
+        PRICE_SOURCE.clear()
         for t in UNIVERSE:
             try:
                 raw = load_prices(t, start, end)
@@ -336,6 +342,27 @@ def metrics(eq: pd.Series) -> dict:
                 total=eq.iloc[-1] / eq.iloc[0] - 1)
 
 
+def _entry_prices(SIG: pd.DataFrame, CLOSE: pd.DataFrame, tickers, asof) -> dict:
+    """For each ticker, the date/price of its most recent breakout entry (last
+    0->1 signal flip at or before `asof`) -- used to show gain/loss since entry
+    on the target book. Approximate: the sleeve is continuously mark-to-market
+    and vol-target-rescaled, not a fixed buy-and-hold lot, so this is "how has
+    the price moved since this name was last (re)entered", not a precise
+    realized-P&L reconstruction."""
+    out = {}
+    for t in tickers:
+        if t not in SIG.columns:
+            continue
+        s = (SIG[t].reindex(CLOSE.index).fillna(0) > 0.5).astype(int).loc[:asof]
+        flips = s.index[(s == 1) & (s.shift(1).fillna(0) == 0)]
+        if len(flips):
+            ed = flips[-1]
+            ep = CLOSE.loc[ed, t] if ed in CLOSE.index else np.nan
+            if np.isfinite(ep):
+                out[t] = (ed, float(ep))
+    return out
+
+
 def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     """Everything the dashboard needs: target book, latest trades, exposure.
 
@@ -356,11 +383,28 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     book = tgt[tgt > capital * 0.001].sort_values(ascending=False)
     prices = {t: float(CLOSE.loc[last, t]) for t in book.index}   # last close = buy reference
 
-    # most recent rebalancing day, scaled to the user's capital
+    # gain/loss since each name's last breakout entry, + where/when its price came from
+    entries = _entry_prices(SIG, CLOSE, book.index, last)
+    sources = {t: PRICE_SOURCE.get(t, "yfinance") for t in book.index}
+    asof_per_ticker = {t: (CLOSE[t].last_valid_index().date()
+                           if CLOSE[t].last_valid_index() is not None else None)
+                       for t in book.index}
+
+    # Most recent rebalancing day, scaled to the user's capital and to the
+    # volatility overlay in force on that day.  The backtest records trades in
+    # the unscaled strategy book, so exposing delta/equity directly would
+    # overstate live orders whenever the portfolio is de-risked.
     tdf = res["trades"].copy()
     if not tdf.empty:
-        tdf["pct"] = tdf["delta"] / tdf["equity"]              # trade as % of portfolio
-        tdf["scaled"] = tdf["pct"] * capital                   # $ on the user's capital
+        trade_dates = pd.to_datetime(tdf["date"])
+        tdf["risk_scale"] = trade_dates.map(res["scale"]).fillna(scale_now)
+        tdf["raw_pct"] = tdf["delta"] / tdf["equity"]          # before vol overlay
+        tdf["raw_dollars"] = tdf["raw_pct"] * capital
+        tdf["pct"] = tdf["raw_pct"] * tdf["risk_scale"]        # executable order weight
+        tdf["scaled"] = tdf["pct"] * capital                   # executable order dollars
+        tdf["target_pct"] = (tdf["target"] / tdf["equity"]
+                             * tdf["risk_scale"])
+        tdf["dollar_target"] = tdf["target_pct"] * capital     # holding after the order
         latest_trades = tdf[tdf["date"] == tdf["date"].max()]
     else:
         latest_trades = tdf
@@ -431,6 +475,7 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         cur_value=cur_value, qqq_core=qcore, sleeves=sleeves, scale_now=scale_now,
         asset_class=cls, gross=res["gross"].iloc[-1], corr_spy=corr, chart=chart,
         metrics=metrics(eq), universe=UNIVERSE, config=CONFIG,
+        entries=entries, sources=sources, asof_per_ticker=asof_per_ticker,
     )
 
 
