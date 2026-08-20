@@ -390,11 +390,21 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
                            if CLOSE[t].last_valid_index() is not None else None)
                        for t in book.index}
 
-    # most recent rebalancing day, scaled to the user's capital
+    # Most recent rebalancing day, scaled to the user's capital and to the
+    # volatility overlay in force on that day.  The backtest records trades in
+    # the unscaled strategy book, so exposing delta/equity directly would
+    # overstate live orders whenever the portfolio is de-risked.
     tdf = res["trades"].copy()
     if not tdf.empty:
-        tdf["pct"] = tdf["delta"] / tdf["equity"]              # trade as % of portfolio
-        tdf["scaled"] = tdf["pct"] * capital                   # $ on the user's capital
+        trade_dates = pd.to_datetime(tdf["date"])
+        tdf["risk_scale"] = trade_dates.map(res["scale"]).fillna(scale_now)
+        tdf["raw_pct"] = tdf["delta"] / tdf["equity"]          # before vol overlay
+        tdf["raw_dollars"] = tdf["raw_pct"] * capital
+        tdf["pct"] = tdf["raw_pct"] * tdf["risk_scale"]        # executable order weight
+        tdf["scaled"] = tdf["pct"] * capital                   # executable order dollars
+        tdf["target_pct"] = (tdf["target"] / tdf["equity"]
+                             * tdf["risk_scale"])
+        tdf["dollar_target"] = tdf["target_pct"] * capital     # holding after the order
         latest_trades = tdf[tdf["date"] == tdf["date"].max()]
     else:
         latest_trades = tdf

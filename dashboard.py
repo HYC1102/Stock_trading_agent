@@ -204,13 +204,21 @@ def build_html(s, fresh=False, start_date=None, track_date=None):
         tr = "".join(
             f'<tr><td class="{"buy" if r["delta"]>0 else "sell"}">'
             f'{"BUY" if r["delta"]>0 else "SELL"}</td><td>{r["ticker"]}</td>'
-            f'<td class="n">${abs(r["scaled"]):,.0f}</td>'
-            f'<td class="n">{r["pct"]*100:+.1f}%</td></tr>'
+            f'<td class="n">${abs(r["raw_dollars"]):,.0f}'
+            f'<br><span class="src">{r["raw_pct"]*100:+.1f}%</span></td>'
+            f'<td class="n">{r["risk_scale"]*100:.0f}%</td>'
+            f'<td class="n">${abs(r["scaled"]):,.0f}'
+            f'<br><span class="src">{r["pct"]*100:+.1f}%</span></td>'
+            f'<td class="n">${r["dollar_target"]:,.0f}'
+            f'<br><span class="src">{r["target_pct"]*100:.1f}%</span></td></tr>'
             for _, r in s["trades"].iterrows())
         trades_html = (f'<p class="sub">Most recent rebalance — {s["trades"]["date"].iloc[0].date()} '
-                       f'(only positions that broke the 15% band)</p>'
-                       f'<table><tr><th>Action</th><th>Ticker</th><th class="n">Amount</th>'
-                       f'<th class="n">% of book</th></tr>{tr}</table>')
+                       f'(only positions that broke the 15% band). Adjusted order applies the '
+                       f'volatility risk scale; target holding is the position value after trading.</p>'
+                       f'<table><tr><th>Action</th><th>Ticker</th>'
+                       f'<th class="n">Raw order</th><th class="n">Risk scale</th>'
+                       f'<th class="n">Adjusted order</th><th class="n">Target holding</th>'
+                       f'</tr>{tr}</table>')
     elif not fresh:
         trades_html = '<p class="sub">No rebalancing needed at the latest close.</p>'
 
