@@ -171,19 +171,19 @@ def build_html(s, fresh=False, start_date=None, track_date=None):
             f'<td class="n"></td><td class="n"></td></tr></table>')
         book_rows = ""; trades_html = ""
     else:
-        entries = s.get("entries", {}); sources = s.get("sources", {})
+        position_pnl = s.get("position_pnl", {}); sources = s.get("sources", {})
         asof_t = s.get("asof_per_ticker", {})
         rows = []
         for t, w in s["book"].items():
-            px = s["prices"].get(t)
-            ed, ep = entries.get(t, (None, None))
-            if ep and px:
-                pct = px / ep - 1
-                dollar = w * pct / (1 + pct) if (1 + pct) else 0.0
+            pnl = position_pnl.get(t)
+            if pnl:
+                pct = pnl["gain_pct"]; dollar = pnl["gain_dollar"]
+                fill_note = (f'<br><span class="src">avg ${pnl["avg_cost"]:,.2f} '
+                             f'&middot; {pnl["entry_date"]:%d %b %y}</span>')
                 gain_cell = (f'<td class="n {rc(pct)}">{pct*100:+.1f}%</td>'
-                            f'<td class="n {rc(dollar)}">${dollar:+,.0f}</td>')
+                             f'<td class="n {rc(dollar)}">${dollar:+,.0f}{fill_note}</td>')
             else:
-                gain_cell = '<td class="n">&mdash;</td><td class="n">&mdash;</td>'
+                gain_cell = '<td class="n">pending</td><td class="n">&mdash;</td>'
             src = sources.get(t, "&mdash;")
             ad = asof_t.get(t)
             src_cell = f'{src}<br><span class="src">{ad:%d %b %y}</span>' if ad else src
@@ -194,8 +194,9 @@ def build_html(s, fresh=False, start_date=None, track_date=None):
         actions_html = (
             '<h2>Today\'s actions</h2>'
             '<p class="sub">Target book — hold these weights (buy the full list if starting fresh). '
-            'Gain/loss is since each name\'s last breakout entry, on its current target size -- '
-            'illustrative given continuous rebalancing, not a realized-P&amp;L reconstruction.</p>'
+            'Gain/loss follows the modeled portfolio orders from the tracking start, using '
+            'next-session open fills and average cost through later buys or sells. Actual broker '
+            'fills may differ.</p>'
             f'<table><tr><th>Ticker</th><th>Asset class</th><th class="n">Weight</th>'
             f'<th class="n">Amount</th><th class="n">Gain %</th><th class="n">Gain $</th>'
             f'<th>Source / as of</th></tr>{book_rows}</table>')
