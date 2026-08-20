@@ -4,8 +4,14 @@ name: Daily paper trade
 # updated log back to the repo, and publishes both dashboards to GitHub Pages.
 on:
   schedule:
-    - cron: '30 22 * * 1-5'      # 22:30 UTC (~6:30pm ET), Mon-Fri (after the US close)
-    - cron: '0 1 * * 2-6'        # 01:00 UTC backup (~9pm ET) if EOD data was late at 22:30
+    # GitHub Actions schedules are best-effort and jobs queued at round times
+    # (:00, :30) get dropped under load -- observed firsthand (a backup run
+    # fired 3h+ late, then the next primary+backup pair never fired at all).
+    # Using off-beat minutes cuts collision odds; three spread-out triggers
+    # mean one dropped slot doesn't leave the dashboard stale for a full day.
+    - cron: '47 22 * * 1-5'      # ~22:47 UTC (~6:47pm ET), Mon-Fri, right after the US close
+    - cron: '13 1 * * 2-6'       # ~01:13 UTC backup, if EOD data was late at 22:47
+    - cron: '36 9 * * 2-6'       # ~09:36 UTC second backup, catches a fully-dropped evening pair
   workflow_dispatch: {}           # manual "Run workflow" button, for testing
   push:
     branches: [main]              # republish on every push to main (state commits use
