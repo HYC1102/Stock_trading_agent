@@ -142,8 +142,11 @@ def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 
     raise ValueError(f"No data for {ticker!r} after {retries} tries ({last})")
 
 
-def build_panels(start: str, end: str | None = None):
-    """Return aligned (signal, next-open-return, trailing-vol, close) frames.
+def build_panels(start: str, end: str | None = None, include_open: bool = False):
+    """Return aligned signal, next-open-return, trailing-vol and close frames.
+
+    When ``include_open`` is true, also return the adjusted-open frame.  The
+    dashboard uses it to reconstruct the fills of the orders it displayed.
 
     yfinance intermittently serves a stale response (missing the latest 1-2
     sessions) that flips back to fresh minutes later. When querying live
@@ -153,7 +156,7 @@ def build_panels(start: str, end: str | None = None):
     """
     exp = _expected_last_session() if end is None else None
     for attempt in range(4):
-        sig, oret, vol, close = {}, {}, {}, {}
+        sig, oret, vol, open_, close = {}, {}, {}, {}, {}
         PRICE_SOURCE.clear()
         for t in UNIVERSE:
             try:
@@ -162,6 +165,7 @@ def build_panels(start: str, end: str | None = None):
                 print(f"  ! {t}: skipped ({exc})")
                 continue
             sig[t] = entry_signal(raw)
+            open_[t] = raw["Open"]
             oret[t] = raw["Open"].pct_change().shift(-1)           # honest next-open fill
             vol[t] = (raw["Close"].pct_change().rolling(CONFIG["vol_window"]).std()
                       * np.sqrt(PPY)).shift(1)
@@ -169,8 +173,11 @@ def build_panels(start: str, end: str | None = None):
         idx = sorted(set().union(*[s.index for s in oret.values()]))
         latest = idx[-1].date() if idx else None
         if exp is None or attempt == 3 or (latest and latest >= exp):
-            return (pd.DataFrame(sig).reindex(idx), pd.DataFrame(oret).reindex(idx),
-                    pd.DataFrame(vol).reindex(idx), pd.DataFrame(close).reindex(idx))
+            panels = (pd.DataFrame(sig).reindex(idx), pd.DataFrame(oret).reindex(idx),
+                      pd.DataFrame(vol).reindex(idx), pd.DataFrame(close).reindex(idx))
+            if include_open:
+                return (*panels, pd.DataFrame(open_).reindex(idx))
+            return panels
         print(f"  trend data stale (latest {latest} < expected {exp}); "
               f"refetching in 30s (attempt {attempt + 1}/4)...")
         time.sleep(30)
@@ -342,24 +349,98 @@ def metrics(eq: pd.Series) -> dict:
                 total=eq.iloc[-1] / eq.iloc[0] - 1)
 
 
-def _entry_prices(SIG: pd.DataFrame, CLOSE: pd.DataFrame, tickers, asof) -> dict:
-    """For each ticker, the date/price of its most recent breakout entry (last
-    0->1 signal flip at or before `asof`) -- used to show gain/loss since entry
-    on the target book. Approximate: the sleeve is continuously mark-to-market
-    and vol-target-rescaled, not a fixed buy-and-hold lot, so this is "how has
-    the price moved since this name was last (re)entered", not a precise
-    realized-P&L reconstruction."""
+def _executed_position_pnl(NET: pd.DataFrame, OPEN: pd.DataFrame,
+                           CLOSE: pd.DataFrame, trades: pd.DataFrame,
+                           scale: pd.Series, capital: float, asof,
+                           track_start=None) -> dict:
+    """Replay the dashboard's modeled orders and return open-position P&L.
+
+    A trade recorded on date D is a close-of-day decision and therefore fills
+    at the next valid adjusted open.  A tracked account is seeded at the first
+    open on/after ``track_start`` using the target decided on the preceding
+    session.  Average cost is maintained through subsequent buys and sells.
+
+    These are the strategy's modeled executions. A broker's actual fills can
+    differ, but—unlike the old signal-date calculation—capital constraints and
+    delayed entries are represented correctly.
+    """
+    asof = pd.Timestamp(asof)
+    market_days = OPEN.index[OPEN.index <= asof]
+    if not len(market_days):
+        return {}
+
+    requested_start = pd.Timestamp(track_start) if track_start is not None else market_days[0]
+    fill_days = market_days[market_days >= requested_start]
+    if not len(fill_days):
+        return {}
+    start_fill = fill_days[0]
+
+    prior_decisions = NET.index[NET.index < start_fill]
+    seed_date = prior_decisions[-1] if len(prior_decisions) else start_fill
+    seed_scale = float(scale.reindex(scale.index.union([seed_date])).sort_index()
+                       .ffill().loc[seed_date])
+    positions = {}
+
+    # Opening account: execute the prior close's complete target book at the
+    # tracked start open.  This mirrors dashboard.py --fresh --date DATE.
+    for ticker, weight in NET.loc[seed_date].items():
+        px = OPEN.loc[start_fill, ticker] if ticker in OPEN.columns else np.nan
+        dollars = float(weight) * seed_scale * capital
+        if dollars > 1e-9 and np.isfinite(px) and px > 0:
+            positions[ticker] = dict(shares=dollars / float(px), cost=dollars,
+                                     entry_date=start_fill, first_fill=float(px))
+
+    if not trades.empty:
+        replay = trades[pd.to_datetime(trades["date"]) >= start_fill].sort_values("date")
+        for _, trade in replay.iterrows():
+            decision = pd.Timestamp(trade["date"])
+            ticker = trade["ticker"]
+            if ticker not in OPEN.columns:
+                continue
+            valid = OPEN[ticker].dropna()
+            valid = valid[(valid.index > decision) & (valid.index <= asof)]
+            if valid.empty:                                  # order is still pending
+                continue
+            fill_date, fill = valid.index[0], float(valid.iloc[0])
+            risk_scale = float(scale.reindex(scale.index.union([decision])).sort_index()
+                               .ffill().loc[decision])
+            target_dollars = (float(trade["target"]) / float(trade["equity"])
+                              * risk_scale * capital)
+            target_shares = max(0.0, target_dollars / fill)
+            old = positions.get(ticker)
+
+            if old is None or old["shares"] <= 1e-12:
+                if target_shares > 1e-12:
+                    positions[ticker] = dict(shares=target_shares,
+                                             cost=target_shares * fill,
+                                             entry_date=fill_date,
+                                             first_fill=fill)
+                continue
+
+            old_shares = float(old["shares"])
+            if target_shares > old_shares:                    # add at this fill
+                old["cost"] += (target_shares - old_shares) * fill
+                old["shares"] = target_shares
+            elif target_shares > 1e-12:                       # reduce average-cost lot
+                old["cost"] *= target_shares / old_shares
+                old["shares"] = target_shares
+            else:
+                positions.pop(ticker, None)
+
     out = {}
-    for t in tickers:
-        if t not in SIG.columns:
+    for ticker, pos in positions.items():
+        if ticker not in CLOSE.columns:
             continue
-        s = (SIG[t].reindex(CLOSE.index).fillna(0) > 0.5).astype(int).loc[:asof]
-        flips = s.index[(s == 1) & (s.shift(1).fillna(0) == 0)]
-        if len(flips):
-            ed = flips[-1]
-            ep = CLOSE.loc[ed, t] if ed in CLOSE.index else np.nan
-            if np.isfinite(ep):
-                out[t] = (ed, float(ep))
+        marks = CLOSE[ticker].dropna().loc[:asof]
+        if marks.empty or pos["cost"] <= 0:
+            continue
+        mark = float(marks.iloc[-1]); value = float(pos["shares"]) * mark
+        gain = value - float(pos["cost"])
+        out[ticker] = dict(entry_date=pd.Timestamp(pos["entry_date"]),
+                           entry_price=float(pos["first_fill"]),
+                           avg_cost=float(pos["cost"]) / float(pos["shares"]),
+                           shares=float(pos["shares"]), value=value,
+                           gain_dollar=gain, gain_pct=gain / float(pos["cost"]))
     return out
 
 
@@ -372,7 +453,7 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     single anchor point at ``capital`` that fills in as you re-run it.
     """
     start = start or CONFIG["start"]
-    SIG, OR, AV, CLOSE = build_panels(start, end)
+    SIG, OR, AV, CLOSE, OPEN = build_panels(start, end, include_open=True)
     NET = net_targets(SIG, OR, AV)
     res = backtest(NET, OR, capital=capital)
     eq = res["equity"]; last = NET.index[-1]
@@ -383,8 +464,6 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     book = tgt[tgt > capital * 0.001].sort_values(ascending=False)
     prices = {t: float(CLOSE.loc[last, t]) for t in book.index}   # last close = buy reference
 
-    # gain/loss since each name's last breakout entry, + where/when its price came from
-    entries = _entry_prices(SIG, CLOSE, book.index, last)
     sources = {t: PRICE_SOURCE.get(t, "yfinance") for t in book.index}
     asof_per_ticker = {t: (CLOSE[t].last_valid_index().date()
                            if CLOSE[t].last_valid_index() is not None else None)
@@ -408,6 +487,9 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         latest_trades = tdf[tdf["date"] == tdf["date"].max()]
     else:
         latest_trades = tdf
+
+    position_pnl = _executed_position_pnl(
+        NET, OPEN, CLOSE, tdf, res["scale"], capital, last, track_start=track_start)
 
     # asset-class exposure from the target weights
     cls = {}
@@ -475,7 +557,7 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
         cur_value=cur_value, qqq_core=qcore, sleeves=sleeves, scale_now=scale_now,
         asset_class=cls, gross=res["gross"].iloc[-1], corr_spy=corr, chart=chart,
         metrics=metrics(eq), universe=UNIVERSE, config=CONFIG,
-        entries=entries, sources=sources, asof_per_ticker=asof_per_ticker,
+        position_pnl=position_pnl, sources=sources, asof_per_ticker=asof_per_ticker,
     )
 
 
