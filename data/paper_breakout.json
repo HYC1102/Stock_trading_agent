@@ -170,6 +170,20 @@
       "value": 9097.59
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "BLK",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "TMO",
+      "price_hint": 627.55,
+      "momentum": 93.8,
+      "sentiment": 55.3,
+      "combined": 78.4
+    }
+  ],
   "last_close": "2026-08-20"
 }
