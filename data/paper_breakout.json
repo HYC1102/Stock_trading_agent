@@ -200,8 +200,26 @@
     {
       "date": "2026-08-24",
       "value": 9242.42
+    },
+    {
+      "date": "2026-08-25",
+      "value": 9149.73
     }
   ],
-  "pending": [],
-  "last_close": "2026-08-24"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "SNOW",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "MRNA",
+      "price_hint": 158.83,
+      "momentum": 100.0,
+      "sentiment": 52.3,
+      "combined": 80.9
+    }
+  ],
+  "last_close": "2026-08-25"
 }
