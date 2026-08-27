@@ -1,19 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 2.2737367544323206e-13,
+  "cash": 0.0,
   "positions": {
-    "SNOW": {
-      "shares": 5.543481684462503,
-      "entry": 317.49,
-      "entry_date": "2026-08-05",
-      "hi": 337.38
-    },
     "PATH": {
       "shares": 124.03100775193799,
       "entry": 14.19,
       "entry_date": "2026-08-05",
-      "hi": 16.68
+      "hi": 16.76
     },
     "PLTR": {
       "shares": 10.864197530864198,
@@ -31,7 +25,13 @@
       "shares": 2.835429437726863,
       "entry": 626.48,
       "entry_date": "2026-08-21",
-      "hi": 629.27
+      "hi": 633.71
+    },
+    "MRNA": {
+      "shares": 11.119902462085983,
+      "entry": 154.2,
+      "entry_date": "2026-08-26",
+      "hi": 149.66
     }
   },
   "trades": [
@@ -142,6 +142,30 @@
       "momentum": 93.8,
       "sentiment": 55.3,
       "combined": 78.4
+    },
+    {
+      "date": "2026-08-26",
+      "side": "SELL",
+      "ticker": "SNOW",
+      "shares": 5.543,
+      "price": 309.44,
+      "value": 1715.37,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-08-26",
+      "side": "BUY",
+      "ticker": "MRNA",
+      "shares": 11.12,
+      "price": 154.2,
+      "value": 1714.69,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 54.8,
+      "combined": 81.9
     }
   ],
   "equity": [
@@ -204,22 +228,12 @@
     {
       "date": "2026-08-25",
       "value": 9149.73
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "SNOW",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "MRNA",
-      "price_hint": 158.83,
-      "momentum": 100.0,
-      "sentiment": 54.8,
-      "combined": 81.9
+      "date": "2026-08-26",
+      "value": 9171.27
     }
   ],
-  "last_close": "2026-08-25"
+  "pending": [],
+  "last_close": "2026-08-26"
 }
