@@ -19,19 +19,19 @@
       "shares": 4.701111091191061,
       "entry": 363.06,
       "entry_date": "2026-08-18",
-      "hi": 375.385009765625
-    },
-    "TMO": {
-      "shares": 2.835429437726863,
-      "entry": 626.48,
-      "entry_date": "2026-08-21",
-      "hi": 633.71
+      "hi": 382.5199890136719
     },
     "MRNA": {
       "shares": 11.119902462085983,
       "entry": 154.2,
       "entry_date": "2026-08-26",
-      "hi": 149.66
+      "hi": 151.77000427246094
+    },
+    "PSX": {
+      "shares": 6.818334344061934,
+      "entry": 250.09,
+      "entry_date": "2026-09-02",
+      "hi": 251.5050048828125
     }
   },
   "trades": [
@@ -166,6 +166,30 @@
       "momentum": 100.0,
       "sentiment": 54.8,
       "combined": 81.9
+    },
+    {
+      "date": "2026-09-02",
+      "side": "SELL",
+      "ticker": "TMO",
+      "shares": 2.835,
+      "price": 601.63,
+      "value": 1705.88,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-02",
+      "side": "BUY",
+      "ticker": "PSX",
+      "shares": 6.818,
+      "price": 250.09,
+      "value": 1705.2,
+      "reason": "breakout",
+      "momentum": 62.5,
+      "sentiment": 55.0,
+      "combined": 59.5
     }
   ],
   "equity": [
@@ -248,22 +272,12 @@
     {
       "date": "2026-09-01",
       "value": 9428.93
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "TMO",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "PSX",
-      "price_hint": 252.02,
-      "momentum": 62.5,
-      "sentiment": 55.0,
-      "combined": 59.5
+      "date": "2026-09-02",
+      "value": 9373.79
     }
   ],
-  "last_close": "2026-09-01"
+  "pending": [],
+  "last_close": "2026-09-02"
 }

@@ -10,3 +10,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-08-21,BUY,TMO,2.835,626.48,1776.34,breakout,93.8,55.3,78.4
 2026-08-26,SELL,SNOW,5.543,309.44,1715.37,1.5-ATR trail,,,
 2026-08-26,BUY,MRNA,11.12,154.2,1714.69,breakout,100.0,54.8,81.9
+2026-09-02,SELL,TMO,2.835,601.63,1705.88,1.5-ATR trail,,,
+2026-09-02,BUY,PSX,6.818,250.09,1705.2,breakout,62.5,55.0,59.5
