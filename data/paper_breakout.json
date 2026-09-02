@@ -250,6 +250,20 @@
       "value": 9428.93
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "TMO",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "PSX",
+      "price_hint": 252.02,
+      "momentum": 62.5,
+      "sentiment": 55.0,
+      "combined": 59.5
+    }
+  ],
   "last_close": "2026-09-01"
 }
