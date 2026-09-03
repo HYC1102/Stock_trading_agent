@@ -278,6 +278,12 @@
       "value": 9373.79
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "PLTR",
+      "reason": "1.5-ATR trail"
+    }
+  ],
   "last_close": "2026-09-02"
 }
