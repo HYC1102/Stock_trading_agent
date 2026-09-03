@@ -283,6 +283,14 @@
       "side": "SELL",
       "ticker": "PLTR",
       "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "CRM",
+      "price_hint": 256.93,
+      "momentum": 50.0,
+      "sentiment": 52.8,
+      "combined": 51.1
     }
   ],
   "last_close": "2026-09-02"
