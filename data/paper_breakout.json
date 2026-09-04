@@ -304,8 +304,26 @@
     {
       "date": "2026-09-03",
       "value": 9413.74
+    },
+    {
+      "date": "2026-09-04",
+      "value": 8805.76
     }
   ],
-  "pending": [],
-  "last_close": "2026-09-03"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "PATH",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "HOOD",
+      "price_hint": 120.67,
+      "momentum": 100.0,
+      "sentiment": 50.3,
+      "combined": 80.1
+    }
+  ],
+  "last_close": "2026-09-04"
 }
