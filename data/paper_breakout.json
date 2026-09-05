@@ -310,6 +310,20 @@
       "value": 8805.76
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "PATH",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "HOOD",
+      "price_hint": 122.11,
+      "momentum": 80.0,
+      "sentiment": 42.9,
+      "combined": 65.2
+    }
+  ],
   "last_close": "2026-09-04"
 }
