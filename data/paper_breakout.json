@@ -1,19 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 6.220776454710858,
+  "cash": 95.8222957240514,
   "positions": {
-    "PATH": {
-      "shares": 124.03100775193799,
-      "entry": 14.19,
-      "entry_date": "2026-08-05",
-      "hi": 18.67
-    },
     "MPC": {
       "shares": 4.701111091191061,
       "entry": 363.06,
       "entry_date": "2026-08-18",
-      "hi": 390.1549987792969
+      "hi": 396.7200012207031
     },
     "MRNA": {
       "shares": 11.119902462085983,
@@ -25,13 +19,19 @@
       "shares": 6.818334344061934,
       "entry": 250.09,
       "entry_date": "2026-09-02",
-      "hi": 256.7142028808594
+      "hi": 259.2250061035156
     },
     "CRM": {
       "shares": 7.120681242603283,
       "entry": 261.98,
       "entry_date": "2026-09-03",
       "hi": 264.375
+    },
+    "HOOD": {
+      "shares": 14.312353156150316,
+      "entry": 125.07,
+      "entry_date": "2026-09-08",
+      "hi": 123.37999725341797
     }
   },
   "trades": [
@@ -214,6 +214,30 @@
       "momentum": 50.0,
       "sentiment": 52.8,
       "combined": 51.1
+    },
+    {
+      "date": "2026-09-08",
+      "side": "SELL",
+      "ticker": "PATH",
+      "shares": 124.031,
+      "price": 15.16,
+      "value": 1880.31,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-08",
+      "side": "BUY",
+      "ticker": "HOOD",
+      "shares": 14.312,
+      "price": 125.07,
+      "value": 1789.97,
+      "reason": "breakout",
+      "momentum": 80.0,
+      "sentiment": 53.8,
+      "combined": 69.5
     }
   ],
   "equity": [
@@ -308,22 +332,26 @@
     {
       "date": "2026-09-04",
       "value": 8805.76
+    },
+    {
+      "date": "2026-09-08",
+      "value": 8853.12
     }
   ],
   "pending": [
     {
       "side": "SELL",
-      "ticker": "PATH",
+      "ticker": "CRM",
       "reason": "1.5-ATR trail"
     },
     {
       "side": "BUY",
-      "ticker": "HOOD",
-      "price_hint": 122.11,
-      "momentum": 80.0,
-      "sentiment": 53.8,
-      "combined": 69.5
+      "ticker": "VLO",
+      "price_hint": 379.2,
+      "momentum": 83.3,
+      "sentiment": 61.3,
+      "combined": 74.5
     }
   ],
-  "last_close": "2026-09-04"
+  "last_close": "2026-09-08"
 }
