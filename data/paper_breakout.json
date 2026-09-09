@@ -338,20 +338,6 @@
       "value": 8853.12
     }
   ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "CRM",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "BUY",
-      "ticker": "VLO",
-      "price_hint": 379.2,
-      "momentum": 83.3,
-      "sentiment": 61.3,
-      "combined": 74.5
-    }
-  ],
+  "pending": [],
   "last_close": "2026-09-08"
 }
