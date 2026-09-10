@@ -1,13 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 95.8222957240514,
+  "cash": 111.58571190939983,
   "positions": {
     "MPC": {
       "shares": 4.701111091191061,
       "entry": 363.06,
       "entry_date": "2026-08-18",
-      "hi": 396.7200012207031
+      "hi": 399.1600036621094
     },
     "MRNA": {
       "shares": 11.119902462085983,
@@ -19,19 +19,19 @@
       "shares": 6.818334344061934,
       "entry": 250.09,
       "entry_date": "2026-09-02",
-      "hi": 259.9599914550781
-    },
-    "CRM": {
-      "shares": 7.120681242603283,
-      "entry": 261.98,
-      "entry_date": "2026-09-03",
-      "hi": 264.375
+      "hi": 261.239990234375
     },
     "HOOD": {
       "shares": 14.312353156150316,
       "entry": 125.07,
       "entry_date": "2026-09-08",
       "hi": 123.37999725341797
+    },
+    "VLO": {
+      "shares": 4.397520457100087,
+      "entry": 393.54,
+      "entry_date": "2026-09-10",
+      "hi": 387.20001220703125
     }
   },
   "trades": [
@@ -238,6 +238,30 @@
       "momentum": 80.0,
       "sentiment": 53.8,
       "combined": 69.5
+    },
+    {
+      "date": "2026-09-10",
+      "side": "SELL",
+      "ticker": "CRM",
+      "shares": 7.121,
+      "price": 245.35,
+      "value": 1747.06,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-10",
+      "side": "BUY",
+      "ticker": "VLO",
+      "shares": 4.398,
+      "price": 393.54,
+      "value": 1730.6,
+      "reason": "breakout",
+      "momentum": 80.0,
+      "sentiment": 59.0,
+      "combined": 71.6
     }
   ],
   "equity": [
@@ -340,22 +364,12 @@
     {
       "date": "2026-09-09",
       "value": 8770.3
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "CRM",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "VLO",
-      "price_hint": 388.95,
-      "momentum": 80.0,
-      "sentiment": 59.0,
-      "combined": 71.6
+      "date": "2026-09-10",
+      "value": 8611.02
     }
   ],
-  "last_close": "2026-09-09"
+  "pending": [],
+  "last_close": "2026-09-10"
 }
