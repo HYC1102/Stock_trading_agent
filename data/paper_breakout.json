@@ -375,6 +375,14 @@
       "side": "SELL",
       "ticker": "HOOD",
       "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "CVX",
+      "price_hint": 212.76,
+      "momentum": 50.0,
+      "sentiment": 58.8,
+      "combined": 53.5
     }
   ],
   "last_close": "2026-09-10"
