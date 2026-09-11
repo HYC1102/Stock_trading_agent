@@ -1,13 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 111.58571190939983,
+  "cash": 14.082074803454361,
   "positions": {
     "MPC": {
       "shares": 4.701111091191061,
       "entry": 363.06,
       "entry_date": "2026-08-18",
-      "hi": 399.1600036621094
+      "hi": 402.0101013183594
     },
     "MRNA": {
       "shares": 11.119902462085983,
@@ -19,19 +19,19 @@
       "shares": 6.818334344061934,
       "entry": 250.09,
       "entry_date": "2026-09-02",
-      "hi": 261.239990234375
-    },
-    "HOOD": {
-      "shares": 14.312353156150316,
-      "entry": 125.07,
-      "entry_date": "2026-09-08",
-      "hi": 123.37999725341797
+      "hi": 261.5199890136719
     },
     "VLO": {
       "shares": 4.397520457100087,
       "entry": 393.54,
       "entry_date": "2026-09-10",
-      "hi": 387.20001220703125
+      "hi": 392.0199890136719
+    },
+    "CVX": {
+      "shares": 8.10838846203631,
+      "entry": 212.02,
+      "entry_date": "2026-09-11",
+      "hi": 214.22000122070312
     }
   },
   "trades": [
@@ -262,6 +262,30 @@
       "momentum": 80.0,
       "sentiment": 59.0,
       "combined": 71.6
+    },
+    {
+      "date": "2026-09-11",
+      "side": "SELL",
+      "ticker": "HOOD",
+      "shares": 14.312,
+      "price": 113.35,
+      "value": 1622.31,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-11",
+      "side": "BUY",
+      "ticker": "CVX",
+      "shares": 8.108,
+      "price": 212.02,
+      "value": 1719.14,
+      "reason": "breakout",
+      "momentum": 50.0,
+      "sentiment": 58.8,
+      "combined": 53.5
     }
   ],
   "equity": [
@@ -368,22 +392,12 @@
     {
       "date": "2026-09-10",
       "value": 8611.02
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "HOOD",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "CVX",
-      "price_hint": 212.76,
-      "momentum": 50.0,
-      "sentiment": 58.8,
-      "combined": 53.5
+      "date": "2026-09-11",
+      "value": 8711.4
     }
   ],
-  "last_close": "2026-09-10"
+  "pending": [],
+  "last_close": "2026-09-11"
 }
