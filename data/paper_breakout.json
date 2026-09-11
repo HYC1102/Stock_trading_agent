@@ -370,6 +370,12 @@
       "value": 8611.02
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "HOOD",
+      "reason": "1.5-ATR trail"
+    }
+  ],
   "last_close": "2026-09-10"
 }
