@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 14.082074803454361,
+  "cash": 0.0,
   "positions": {
     "MPC": {
       "shares": 4.701111091191061,
@@ -13,7 +13,7 @@
       "shares": 11.119902462085983,
       "entry": 154.2,
       "entry_date": "2026-08-26",
-      "hi": 172.94
+      "hi": 179.42999267578125
     },
     "PSX": {
       "shares": 6.818334344061934,
@@ -27,11 +27,11 @@
       "entry_date": "2026-09-10",
       "hi": 413.7900085449219
     },
-    "CVX": {
-      "shares": 8.10838846203631,
-      "entry": 212.02,
-      "entry_date": "2026-09-11",
-      "hi": 215.39999389648438
+    "MSTR": {
+      "shares": 9.85291622695597,
+      "entry": 167.49,
+      "entry_date": "2026-09-22",
+      "hi": 169.38999938964844
     }
   },
   "trades": [
@@ -286,6 +286,30 @@
       "momentum": 50.0,
       "sentiment": 58.8,
       "combined": 53.5
+    },
+    {
+      "date": "2026-09-22",
+      "side": "SELL",
+      "ticker": "CVX",
+      "shares": 8.108,
+      "price": 201.87,
+      "value": 1636.84,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-22",
+      "side": "BUY",
+      "ticker": "MSTR",
+      "shares": 9.853,
+      "price": 167.49,
+      "value": 1650.26,
+      "reason": "breakout",
+      "momentum": 70.0,
+      "sentiment": 58.0,
+      "combined": 65.2
     }
   ],
   "equity": [
@@ -420,22 +444,52 @@
     {
       "date": "2026-09-21",
       "value": 8994.34
+    },
+    {
+      "date": "2026-09-22",
+      "value": 8941.68
     }
   ],
   "pending": [
     {
       "side": "SELL",
-      "ticker": "CVX",
+      "ticker": "MPC",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "PSX",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "VLO",
       "reason": "1.5-ATR trail"
     },
     {
       "side": "BUY",
-      "ticker": "MSTR",
-      "price_hint": 168.5,
-      "momentum": 70.0,
-      "sentiment": 58.0,
-      "combined": 65.2
+      "ticker": "META",
+      "price_hint": 750.85,
+      "momentum": 71.4,
+      "sentiment": 62.8,
+      "combined": 68.0
+    },
+    {
+      "side": "BUY",
+      "ticker": "AMD",
+      "price_hint": 620.14,
+      "momentum": 57.1,
+      "sentiment": 59.9,
+      "combined": 58.2
+    },
+    {
+      "side": "BUY",
+      "ticker": "WBD",
+      "price_hint": 30.8,
+      "momentum": 42.9,
+      "sentiment": 47.8,
+      "combined": 44.8
     }
   ],
-  "last_close": "2026-09-21"
+  "last_close": "2026-09-22"
 }
