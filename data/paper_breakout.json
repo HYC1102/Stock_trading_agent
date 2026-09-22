@@ -13,7 +13,7 @@
       "shares": 11.119902462085983,
       "entry": 154.2,
       "entry_date": "2026-08-26",
-      "hi": 160.60009765625
+      "hi": 172.94
     },
     "PSX": {
       "shares": 6.818334344061934,
@@ -416,8 +416,26 @@
     {
       "date": "2026-09-18",
       "value": 9142.78
+    },
+    {
+      "date": "2026-09-21",
+      "value": 8994.34
     }
   ],
-  "pending": [],
-  "last_close": "2026-09-18"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "CVX",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "MSTR",
+      "price_hint": 168.5,
+      "momentum": 70.0,
+      "sentiment": 58.0,
+      "combined": 65.2
+    }
+  ],
+  "last_close": "2026-09-21"
 }
