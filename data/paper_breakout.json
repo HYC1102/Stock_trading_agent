@@ -450,46 +450,6 @@
       "value": 8941.68
     }
   ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "MPC",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "SELL",
-      "ticker": "PSX",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "SELL",
-      "ticker": "VLO",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "BUY",
-      "ticker": "META",
-      "price_hint": 750.85,
-      "momentum": 71.4,
-      "sentiment": 62.8,
-      "combined": 68.0
-    },
-    {
-      "side": "BUY",
-      "ticker": "AMD",
-      "price_hint": 620.14,
-      "momentum": 57.1,
-      "sentiment": 59.9,
-      "combined": 58.2
-    },
-    {
-      "side": "BUY",
-      "ticker": "WBD",
-      "price_hint": 30.8,
-      "momentum": 42.9,
-      "sentiment": 47.8,
-      "combined": 44.8
-    }
-  ],
+  "pending": [],
   "last_close": "2026-09-22"
 }
