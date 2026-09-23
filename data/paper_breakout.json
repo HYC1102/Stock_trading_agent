@@ -450,6 +450,22 @@
       "value": 8941.68
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "MPC",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "PSX",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "VLO",
+      "reason": "1.5-ATR trail"
+    }
+  ],
   "last_close": "2026-09-22"
 }
