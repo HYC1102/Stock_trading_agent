@@ -472,6 +472,31 @@
       "value": 9004.77
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "BUY",
+      "ticker": "OKTA",
+      "price_hint": 205.36,
+      "momentum": 91.7,
+      "sentiment": 58.4,
+      "combined": 78.4
+    },
+    {
+      "side": "BUY",
+      "ticker": "ILMN",
+      "price_hint": 255.38,
+      "momentum": 75.0,
+      "sentiment": 54.2,
+      "combined": 66.7
+    },
+    {
+      "side": "BUY",
+      "ticker": "CRWD",
+      "price_hint": 262.49,
+      "momentum": 66.7,
+      "sentiment": 59.7,
+      "combined": 63.9
+    }
+  ],
   "last_close": "2026-09-23"
 }
