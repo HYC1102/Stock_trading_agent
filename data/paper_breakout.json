@@ -472,31 +472,6 @@
       "value": 9004.77
     }
   ],
-  "pending": [
-    {
-      "side": "BUY",
-      "ticker": "OKTA",
-      "price_hint": 198.06,
-      "momentum": 91.7,
-      "sentiment": 61.3,
-      "combined": 79.5
-    },
-    {
-      "side": "BUY",
-      "ticker": "ILMN",
-      "price_hint": 250.02,
-      "momentum": 75.0,
-      "sentiment": 54.2,
-      "combined": 66.7
-    },
-    {
-      "side": "BUY",
-      "ticker": "TMO",
-      "price_hint": 660.19,
-      "momentum": 66.7,
-      "sentiment": 55.4,
-      "combined": 62.2
-    }
-  ],
+  "pending": [],
   "last_close": "2026-09-23"
 }
