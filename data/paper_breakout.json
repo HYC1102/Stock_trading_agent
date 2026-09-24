@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 5286.623095276504,
+  "cash": 0.0,
   "positions": {
     "MRNA": {
       "shares": 11.119902462085983,
@@ -14,6 +14,24 @@
       "entry": 167.49,
       "entry_date": "2026-09-22",
       "hi": 169.38999938964844
+    },
+    "OKTA": {
+      "shares": 8.758411421530772,
+      "entry": 202.75,
+      "entry_date": "2026-09-24",
+      "hi": 205.9600067138672
+    },
+    "ILMN": {
+      "shares": 6.9969973706303445,
+      "entry": 253.79,
+      "entry_date": "2026-09-24",
+      "hi": 266.6050109863281
+    },
+    "CRWD": {
+      "shares": 6.624124500352621,
+      "entry": 261.77,
+      "entry_date": "2026-09-24",
+      "hi": 259.9200134277344
     }
   },
   "trades": [
@@ -328,6 +346,42 @@
       "momentum": "",
       "sentiment": "",
       "combined": ""
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "OKTA",
+      "shares": 8.758,
+      "price": 202.75,
+      "value": 1775.77,
+      "reason": "breakout",
+      "momentum": 91.7,
+      "sentiment": 58.4,
+      "combined": 78.4
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "ILMN",
+      "shares": 6.997,
+      "price": 253.79,
+      "value": 1775.77,
+      "reason": "breakout",
+      "momentum": 75.0,
+      "sentiment": 54.2,
+      "combined": 66.7
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "CRWD",
+      "shares": 6.624,
+      "price": 261.77,
+      "value": 1734.03,
+      "reason": "breakout",
+      "momentum": 66.7,
+      "sentiment": 59.7,
+      "combined": 63.9
     }
   ],
   "equity": [
@@ -470,33 +524,12 @@
     {
       "date": "2026-09-23",
       "value": 9004.77
-    }
-  ],
-  "pending": [
-    {
-      "side": "BUY",
-      "ticker": "OKTA",
-      "price_hint": 205.36,
-      "momentum": 91.7,
-      "sentiment": 58.4,
-      "combined": 78.4
     },
     {
-      "side": "BUY",
-      "ticker": "ILMN",
-      "price_hint": 255.38,
-      "momentum": 75.0,
-      "sentiment": 54.2,
-      "combined": 66.7
-    },
-    {
-      "side": "BUY",
-      "ticker": "CRWD",
-      "price_hint": 262.49,
-      "momentum": 66.7,
-      "sentiment": 59.7,
-      "combined": 63.9
+      "date": "2026-09-24",
+      "value": 9069.94
     }
   ],
-  "last_close": "2026-09-23"
+  "pending": [],
+  "last_close": "2026-09-24"
 }
