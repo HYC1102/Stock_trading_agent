@@ -7,7 +7,7 @@
       "shares": 11.119902462085983,
       "entry": 154.2,
       "entry_date": "2026-08-26",
-      "hi": 197.28
+      "hi": 198.10000610351562
     },
     "MSTR": {
       "shares": 9.85291622695597,
@@ -536,8 +536,26 @@
     {
       "date": "2026-09-28",
       "value": 9132.59
+    },
+    {
+      "date": "2026-09-29",
+      "value": 9084.24
     }
   ],
-  "pending": [],
-  "last_close": "2026-09-28"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "MSTR",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "WBD",
+      "price_hint": 30.86,
+      "momentum": 33.3,
+      "sentiment": 50.0,
+      "combined": 40.0
+    }
+  ],
+  "last_close": "2026-09-29"
 }
