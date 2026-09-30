@@ -28,3 +28,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-09-24,BUY,OKTA,8.758,202.75,1775.77,breakout,91.7,58.4,78.4
 2026-09-24,BUY,ILMN,6.997,253.79,1775.77,breakout,75.0,54.2,66.7
 2026-09-24,BUY,CRWD,6.624,261.77,1734.03,breakout,66.7,59.7,63.9
+2026-09-30,SELL,MSTR,9.853,160.82,1584.55,1.5-ATR trail,,,
+2026-09-30,BUY,WBD,51.342,30.85,1583.91,breakout,33.3,46.4,38.6

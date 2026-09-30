@@ -9,29 +9,29 @@
       "entry_date": "2026-08-26",
       "hi": 198.10000610351562
     },
-    "MSTR": {
-      "shares": 9.85291622695597,
-      "entry": 167.49,
-      "entry_date": "2026-09-22",
-      "hi": 169.38999938964844
-    },
     "OKTA": {
       "shares": 8.758411421530772,
       "entry": 202.75,
       "entry_date": "2026-09-24",
-      "hi": 205.9600067138672
+      "hi": 211.125
     },
     "ILMN": {
       "shares": 6.9969973706303445,
       "entry": 253.79,
       "entry_date": "2026-09-24",
-      "hi": 274.7349853515625
+      "hi": 277.7749938964844
     },
     "CRWD": {
       "shares": 6.624124500352621,
       "entry": 261.77,
       "entry_date": "2026-09-24",
-      "hi": 259.9200134277344
+      "hi": 267.3450012207031
+    },
+    "WBD": {
+      "shares": 51.34237758550513,
+      "entry": 30.85,
+      "entry_date": "2026-09-30",
+      "hi": 30.829999923706055
     }
   },
   "trades": [
@@ -382,6 +382,30 @@
       "momentum": 66.7,
       "sentiment": 59.7,
       "combined": 63.9
+    },
+    {
+      "date": "2026-09-30",
+      "side": "SELL",
+      "ticker": "MSTR",
+      "shares": 9.853,
+      "price": 160.82,
+      "value": 1584.55,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-30",
+      "side": "BUY",
+      "ticker": "WBD",
+      "shares": 51.342,
+      "price": 30.85,
+      "value": 1583.91,
+      "reason": "breakout",
+      "momentum": 33.3,
+      "sentiment": 46.4,
+      "combined": 38.6
     }
   ],
   "equity": [
@@ -540,22 +564,12 @@
     {
       "date": "2026-09-29",
       "value": 9084.24
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "MSTR",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "WBD",
-      "price_hint": 30.85,
-      "momentum": 33.3,
-      "sentiment": 46.4,
-      "combined": 38.6
+      "date": "2026-09-30",
+      "value": 9253.25
     }
   ],
-  "last_close": "2026-09-29"
+  "pending": [],
+  "last_close": "2026-09-30"
 }
