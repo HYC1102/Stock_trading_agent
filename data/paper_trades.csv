@@ -30,3 +30,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-09-24,BUY,CRWD,6.624,261.77,1734.03,breakout,66.7,59.7,63.9
 2026-09-30,SELL,MSTR,9.853,160.82,1584.55,1.5-ATR trail,,,
 2026-09-30,BUY,WBD,51.342,30.85,1583.91,breakout,33.3,46.4,38.6
+2026-10-08,SELL,ILMN,6.997,264.34,1849.59,1.5-ATR trail,,,
+2026-10-08,BUY,HPE,21.812,70.45,1536.68,breakout,100.0,50.0,80.0
