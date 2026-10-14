@@ -628,8 +628,39 @@
     {
       "date": "2026-10-13",
       "value": 7946.26
+    },
+    {
+      "date": "2026-10-14",
+      "value": 7750.26
     }
   ],
-  "pending": [],
-  "last_close": "2026-10-13"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "CRWD",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "HPE",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "P",
+      "price_hint": 147.95,
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "side": "BUY",
+      "ticker": "MPC",
+      "price_hint": 477.41,
+      "momentum": 88.9,
+      "sentiment": 50.0,
+      "combined": 73.3
+    }
+  ],
+  "last_close": "2026-10-14"
 }
