@@ -653,7 +653,7 @@
     {
       "side": "BUY",
       "ticker": "P",
-      "price_hint": 156.97,
+      "price_hint": 141.49,
       "momentum": 100.0,
       "sentiment": 50.0,
       "combined": 80.0
@@ -662,17 +662,17 @@
       "side": "BUY",
       "ticker": "MPC",
       "price_hint": 484.92,
-      "momentum": 94.7,
+      "momentum": 94.1,
       "sentiment": 50.0,
-      "combined": 76.8
+      "combined": 76.5
     },
     {
       "side": "BUY",
-      "ticker": "PLTR",
-      "price_hint": 208.67,
-      "momentum": 89.5,
+      "ticker": "VLO",
+      "price_hint": 459.78,
+      "momentum": 88.2,
       "sentiment": 50.0,
-      "combined": 73.7
+      "combined": 72.9
     }
   ],
   "last_close": "2026-10-14"
