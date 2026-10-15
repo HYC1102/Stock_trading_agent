@@ -1,25 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 312.23195189447097,
+  "cash": 502.5741886600995,
   "positions": {
     "MRNA": {
       "shares": 11.119902462085983,
       "entry": 154.2,
       "entry_date": "2026-08-26",
-      "hi": 218.03500366210938
-    },
-    "OKTA": {
-      "shares": 8.758411421530772,
-      "entry": 202.75,
-      "entry_date": "2026-09-24",
-      "hi": 228.2949981689453
-    },
-    "CRWD": {
-      "shares": 6.624124500352621,
-      "entry": 261.77,
-      "entry_date": "2026-09-24",
-      "hi": 278.2550048828125
+      "hi": 230.41000366210938
     },
     "WBD": {
       "shares": 51.34237758550513,
@@ -27,11 +15,23 @@
       "entry_date": "2026-09-30",
       "hi": 30.95
     },
-    "HPE": {
-      "shares": 21.81230832274304,
-      "entry": 70.45,
-      "entry_date": "2026-10-08",
-      "hi": 72.0999984741211
+    "P": {
+      "shares": 11.173017302700936,
+      "entry": 134.74,
+      "entry_date": "2026-10-15",
+      "hi": 130.65499877929688
+    },
+    "MPC": {
+      "shares": 3.1284215604948864,
+      "entry": 481.2,
+      "entry_date": "2026-10-15",
+      "hi": 474.54998779296875
+    },
+    "VLO": {
+      "shares": 3.2976922083217506,
+      "entry": 456.5,
+      "entry_date": "2026-10-15",
+      "hi": 449.7550048828125
     }
   },
   "trades": [
@@ -430,6 +430,78 @@
       "momentum": 100.0,
       "sentiment": 50.0,
       "combined": 80.0
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "OKTA",
+      "shares": 8.758,
+      "price": 204.13,
+      "value": 1787.9,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "CRWD",
+      "shares": 6.624,
+      "price": 243.61,
+      "value": 1613.7,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "HPE",
+      "shares": 21.812,
+      "price": 59.91,
+      "value": 1306.78,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "P",
+      "shares": 11.173,
+      "price": 134.74,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "MPC",
+      "shares": 3.128,
+      "price": 481.2,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 94.1,
+      "sentiment": 50.0,
+      "combined": 76.5
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "VLO",
+      "shares": 3.298,
+      "price": 456.5,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 88.2,
+      "sentiment": 50.0,
+      "combined": 72.9
     }
   ],
   "equity": [
@@ -632,48 +704,12 @@
     {
       "date": "2026-10-14",
       "value": 7750.26
+    },
+    {
+      "date": "2026-10-15",
+      "value": 7492.27
     }
   ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "OKTA",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "SELL",
-      "ticker": "CRWD",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "SELL",
-      "ticker": "HPE",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "BUY",
-      "ticker": "P",
-      "price_hint": 141.49,
-      "momentum": 100.0,
-      "sentiment": 50.0,
-      "combined": 80.0
-    },
-    {
-      "side": "BUY",
-      "ticker": "MPC",
-      "price_hint": 484.92,
-      "momentum": 94.1,
-      "sentiment": 50.0,
-      "combined": 76.5
-    },
-    {
-      "side": "BUY",
-      "ticker": "VLO",
-      "price_hint": 459.78,
-      "momentum": 88.2,
-      "sentiment": 50.0,
-      "combined": 72.9
-    }
-  ],
-  "last_close": "2026-10-14"
+  "pending": [],
+  "last_close": "2026-10-15"
 }
