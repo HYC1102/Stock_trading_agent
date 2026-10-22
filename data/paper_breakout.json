@@ -724,8 +724,26 @@
     {
       "date": "2026-10-21",
       "value": 7655.7
+    },
+    {
+      "date": "2026-10-22",
+      "value": 7287.56
     }
   ],
-  "pending": [],
-  "last_close": "2026-10-21"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "VLO",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "ACN",
+      "price_hint": 245.88,
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    }
+  ],
+  "last_close": "2026-10-22"
 }
