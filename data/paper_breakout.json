@@ -733,16 +733,13 @@
   "pending": [
     {
       "side": "SELL",
-      "ticker": "VLO",
+      "ticker": "MRNA",
       "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "ACN",
-      "price_hint": 245.88,
-      "momentum": 100.0,
-      "sentiment": 50.0,
-      "combined": 80.0
+      "side": "SELL",
+      "ticker": "P",
+      "reason": "10-day low"
     }
   ],
   "last_close": "2026-10-22"
