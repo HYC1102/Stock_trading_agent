@@ -1,14 +1,8 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 502.5741886600995,
+  "cash": 1307.4894949622021,
   "positions": {
-    "MRNA": {
-      "shares": 11.119902462085983,
-      "entry": 154.2,
-      "entry_date": "2026-08-26",
-      "hi": 246.3300018310547
-    },
     "WBD": {
       "shares": 51.34237758550513,
       "entry": 30.85,
@@ -32,6 +26,12 @@
       "entry": 456.5,
       "entry_date": "2026-10-15",
       "hi": 449.7550048828125
+    },
+    "ACN": {
+      "shares": 5.482102387131068,
+      "entry": 252.01,
+      "entry_date": "2026-10-23",
+      "hi": 243.2050018310547
     }
   },
   "trades": [
@@ -502,6 +502,30 @@
       "momentum": 88.2,
       "sentiment": 50.0,
       "combined": 72.9
+    },
+    {
+      "date": "2026-10-23",
+      "side": "SELL",
+      "ticker": "MRNA",
+      "shares": 11.12,
+      "price": 196.69,
+      "value": 2187.17,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-23",
+      "side": "BUY",
+      "ticker": "ACN",
+      "shares": 5.482,
+      "price": 252.01,
+      "value": 1381.54,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
     }
   ],
   "equity": [
@@ -728,22 +752,26 @@
     {
       "date": "2026-10-22",
       "value": 7287.56
+    },
+    {
+      "date": "2026-10-23",
+      "value": 6854.73
     }
   ],
   "pending": [
     {
       "side": "SELL",
-      "ticker": "MRNA",
+      "ticker": "VLO",
       "reason": "1.5-ATR trail"
     },
     {
       "side": "BUY",
-      "ticker": "ACN",
-      "price_hint": 258.74,
-      "momentum": 100.0,
+      "ticker": "COP",
+      "price_hint": 150.99,
+      "momentum": 95.2,
       "sentiment": 50.0,
-      "combined": 80.0
+      "combined": 77.1
     }
   ],
-  "last_close": "2026-10-22"
+  "last_close": "2026-10-23"
 }

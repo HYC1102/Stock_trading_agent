@@ -38,3 +38,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-10-15,BUY,P,11.173,134.74,1505.4,breakout,100.0,50.0,80.0
 2026-10-15,BUY,MPC,3.128,481.2,1505.4,breakout,94.1,50.0,76.5
 2026-10-15,BUY,VLO,3.298,456.5,1505.4,breakout,88.2,50.0,72.9
+2026-10-23,SELL,MRNA,11.12,196.69,2187.17,1.5-ATR trail,,,
+2026-10-23,BUY,ACN,5.482,252.01,1381.54,breakout,100.0,50.0,80.0
