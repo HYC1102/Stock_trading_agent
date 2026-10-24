@@ -758,20 +758,6 @@
       "value": 6854.73
     }
   ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "VLO",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "BUY",
-      "ticker": "COP",
-      "price_hint": 150.99,
-      "momentum": 95.2,
-      "sentiment": 50.0,
-      "combined": 77.1
-    }
-  ],
+  "pending": [],
   "last_close": "2026-10-23"
 }
