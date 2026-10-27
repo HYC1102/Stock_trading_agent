@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1307.4894949622021,
+  "cash": 1310.8079624993356,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -21,17 +21,17 @@
       "entry_date": "2026-10-15",
       "hi": 477.29998779296875
     },
-    "VLO": {
-      "shares": 3.2976922083217506,
-      "entry": 456.5,
-      "entry_date": "2026-10-15",
-      "hi": 449.7550048828125
-    },
     "ACN": {
       "shares": 5.482102387131068,
       "entry": 252.01,
       "entry_date": "2026-10-23",
-      "hi": 243.2050018310547
+      "hi": 247.23
+    },
+    "ZS": {
+      "shares": 5.3815921823572905,
+      "entry": 255.42,
+      "entry_date": "2026-10-26",
+      "hi": 260.45
     }
   },
   "trades": [
@@ -526,6 +526,30 @@
       "momentum": 100.0,
       "sentiment": 50.0,
       "combined": 80.0
+    },
+    {
+      "date": "2026-10-26",
+      "side": "SELL",
+      "ticker": "VLO",
+      "shares": 3.298,
+      "price": 418.0,
+      "value": 1378.44,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-26",
+      "side": "BUY",
+      "ticker": "ZS",
+      "shares": 5.382,
+      "price": 255.42,
+      "value": 1374.57,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
     }
   ],
   "equity": [
@@ -756,22 +780,12 @@
     {
       "date": "2026-10-23",
       "value": 6854.73
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "VLO",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "ZS",
-      "price_hint": 255.15,
-      "momentum": 100.0,
-      "sentiment": 50.0,
-      "combined": 80.0
+      "date": "2026-10-26",
+      "value": 7007.5
     }
   ],
-  "last_close": "2026-10-23"
+  "pending": [],
+  "last_close": "2026-10-26"
 }
