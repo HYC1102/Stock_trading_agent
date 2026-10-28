@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1310.8079624993356,
+  "cash": 1293.5778614427863,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -13,13 +13,7 @@
       "shares": 11.173017302700936,
       "entry": 134.74,
       "entry_date": "2026-10-15",
-      "hi": 138.13999938964844
-    },
-    "MPC": {
-      "shares": 3.1284215604948864,
-      "entry": 481.2,
-      "entry_date": "2026-10-15",
-      "hi": 477.29998779296875
+      "hi": 139.4499969482422
     },
     "ACN": {
       "shares": 5.482102387131068,
@@ -32,6 +26,12 @@
       "entry": 255.42,
       "entry_date": "2026-10-26",
       "hi": 260.45
+    },
+    "COP": {
+      "shares": 9.341761752995927,
+      "entry": 148.79,
+      "entry_date": "2026-10-28",
+      "hi": 150.27000427246094
     }
   },
   "trades": [
@@ -550,6 +550,30 @@
       "momentum": 100.0,
       "sentiment": 50.0,
       "combined": 80.0
+    },
+    {
+      "date": "2026-10-28",
+      "side": "SELL",
+      "ticker": "MPC",
+      "shares": 3.128,
+      "price": 438.97,
+      "value": 1373.28,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-28",
+      "side": "BUY",
+      "ticker": "COP",
+      "shares": 9.342,
+      "price": 148.79,
+      "value": 1389.96,
+      "reason": "breakout",
+      "momentum": 83.3,
+      "sentiment": 50.0,
+      "combined": 70.0
     }
   ],
   "equity": [
@@ -788,22 +812,12 @@
     {
       "date": "2026-10-27",
       "value": 6926.45
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "MPC",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "COP",
-      "price_hint": 147.96,
-      "momentum": 83.3,
-      "sentiment": 50.0,
-      "combined": 70.0
+      "date": "2026-10-28",
+      "value": 6993.56
     }
   ],
-  "last_close": "2026-10-27"
+  "pending": [],
+  "last_close": "2026-10-28"
 }
