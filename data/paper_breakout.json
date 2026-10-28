@@ -800,9 +800,9 @@
       "side": "BUY",
       "ticker": "COP",
       "price_hint": 147.96,
-      "momentum": 85.7,
+      "momentum": 83.3,
       "sentiment": 50.0,
-      "combined": 71.4
+      "combined": 70.0
     }
   ],
   "last_close": "2026-10-27"
