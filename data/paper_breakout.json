@@ -19,7 +19,7 @@
       "shares": 5.482102387131068,
       "entry": 252.01,
       "entry_date": "2026-10-23",
-      "hi": 247.23
+      "hi": 257.7900085449219
     },
     "ZS": {
       "shares": 5.3815921823572905,
@@ -31,7 +31,7 @@
       "shares": 9.341761752995927,
       "entry": 148.79,
       "entry_date": "2026-10-28",
-      "hi": 150.27000427246094
+      "hi": 153.1428985595703
     }
   },
   "trades": [
@@ -820,8 +820,39 @@
     {
       "date": "2026-10-29",
       "value": 6894.86
+    },
+    {
+      "date": "2026-10-30",
+      "value": 6800.4
     }
   ],
-  "pending": [],
-  "last_close": "2026-10-29"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "P",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "SELL",
+      "ticker": "ZS",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "GILD",
+      "price_hint": 171.75,
+      "momentum": 95.5,
+      "sentiment": 50.0,
+      "combined": 77.3
+    },
+    {
+      "side": "BUY",
+      "ticker": "LNG",
+      "price_hint": 328.08,
+      "momentum": 86.4,
+      "sentiment": 50.0,
+      "combined": 71.8
+    }
+  ],
+  "last_close": "2026-10-30"
 }
