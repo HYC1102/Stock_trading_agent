@@ -840,7 +840,7 @@
     {
       "side": "BUY",
       "ticker": "GILD",
-      "price_hint": 171.75,
+      "price_hint": 170.68,
       "momentum": 95.5,
       "sentiment": 50.0,
       "combined": 77.3
@@ -848,7 +848,7 @@
     {
       "side": "BUY",
       "ticker": "LNG",
-      "price_hint": 328.08,
+      "price_hint": 330.32,
       "momentum": 86.4,
       "sentiment": 50.0,
       "combined": 71.8
