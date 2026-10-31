@@ -841,17 +841,17 @@
       "side": "BUY",
       "ticker": "GILD",
       "price_hint": 170.68,
-      "momentum": 95.5,
+      "momentum": 95.7,
       "sentiment": 50.0,
-      "combined": 77.3
+      "combined": 77.4
     },
     {
       "side": "BUY",
       "ticker": "LNG",
       "price_hint": 330.32,
-      "momentum": 86.4,
+      "momentum": 87.0,
       "sentiment": 50.0,
-      "combined": 71.8
+      "combined": 72.2
     }
   ],
   "last_close": "2026-10-30"
