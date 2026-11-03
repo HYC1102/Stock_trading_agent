@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1293.5778614427863,
+  "cash": 1284.7826076541414,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -9,29 +9,29 @@
       "entry_date": "2026-09-30",
       "hi": 30.95
     },
-    "P": {
-      "shares": 11.173017302700936,
-      "entry": 134.74,
-      "entry_date": "2026-10-15",
-      "hi": 139.75
-    },
     "ACN": {
       "shares": 5.482102387131068,
       "entry": 252.01,
       "entry_date": "2026-10-23",
-      "hi": 257.7900085449219
-    },
-    "ZS": {
-      "shares": 5.3815921823572905,
-      "entry": 255.42,
-      "entry_date": "2026-10-26",
-      "hi": 260.45
+      "hi": 260.94
     },
     "COP": {
       "shares": 9.341761752995927,
       "entry": 148.79,
       "entry_date": "2026-10-28",
       "hi": 153.1428985595703
+    },
+    "GILD": {
+      "shares": 8.0556619459171,
+      "entry": 169.85,
+      "entry_date": "2026-11-02",
+      "hi": 170.33
+    },
+    "LNG": {
+      "shares": 4.309733468294127,
+      "entry": 317.48,
+      "entry_date": "2026-11-02",
+      "hi": 311.67
     }
   },
   "trades": [
@@ -574,6 +574,54 @@
       "momentum": 83.3,
       "sentiment": 50.0,
       "combined": 70.0
+    },
+    {
+      "date": "2026-11-02",
+      "side": "SELL",
+      "ticker": "P",
+      "shares": 11.173,
+      "price": 129.25,
+      "value": 1444.11,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-02",
+      "side": "SELL",
+      "ticker": "ZS",
+      "shares": 5.382,
+      "price": 238.72,
+      "value": 1284.69,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-02",
+      "side": "BUY",
+      "ticker": "GILD",
+      "shares": 8.056,
+      "price": 169.85,
+      "value": 1368.25,
+      "reason": "breakout",
+      "momentum": 95.7,
+      "sentiment": 50.0,
+      "combined": 77.4
+    },
+    {
+      "date": "2026-11-02",
+      "side": "BUY",
+      "ticker": "LNG",
+      "shares": 4.31,
+      "price": 317.48,
+      "value": 1368.25,
+      "reason": "breakout",
+      "momentum": 87.0,
+      "sentiment": 50.0,
+      "combined": 72.2
     }
   ],
   "equity": [
@@ -824,35 +872,26 @@
     {
       "date": "2026-10-30",
       "value": 6800.4
+    },
+    {
+      "date": "2026-11-02",
+      "value": 6802.36
     }
   ],
   "pending": [
     {
       "side": "SELL",
-      "ticker": "P",
-      "reason": "1.5-ATR trail"
-    },
-    {
-      "side": "SELL",
-      "ticker": "ZS",
+      "ticker": "COP",
       "reason": "1.5-ATR trail"
     },
     {
       "side": "BUY",
-      "ticker": "GILD",
-      "price_hint": 170.68,
-      "momentum": 95.7,
+      "ticker": "LLY",
+      "price_hint": 1410.99,
+      "momentum": 96.0,
       "sentiment": 50.0,
-      "combined": 77.4
-    },
-    {
-      "side": "BUY",
-      "ticker": "LNG",
-      "price_hint": 330.32,
-      "momentum": 87.0,
-      "sentiment": 50.0,
-      "combined": 72.2
+      "combined": 77.6
     }
   ],
-  "last_close": "2026-10-30"
+  "last_close": "2026-11-02"
 }
