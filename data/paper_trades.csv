@@ -48,3 +48,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-11-02,SELL,ZS,5.382,238.72,1284.69,1.5-ATR trail,,,
 2026-11-02,BUY,GILD,8.056,169.85,1368.25,breakout,95.7,50.0,77.4
 2026-11-02,BUY,LNG,4.31,317.48,1368.25,breakout,87.0,50.0,72.2
+2026-11-03,SELL,COP,9.342,145.18,1356.24,1.5-ATR trail,,,
+2026-11-03,BUY,LLY,0.96,1399.63,1343.26,breakout,96.0,50.0,77.6
