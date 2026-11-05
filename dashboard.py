@@ -1,5 +1,5 @@
 """
-Generate a self-contained HTML dashboard for the 40/40/20 strategy.
+Generate a self-contained HTML dashboard for the Diversified Trend Sleeve.
 
 Two panels (no external dependencies — opens offline in any browser):
   1. Today's actions   — target holdings and the most recent rebalance trades.
@@ -250,7 +250,7 @@ def build_html(s, fresh=False, start_date=None, track_date=None):
     elif C["bond_w"] > 1e-9:
         title = f'{C["trend_w"]:.0%} Trend / {C["bond_w"]:.0%} Bonds portfolio'
     else:
-        title = "Diversified Trend sleeve"
+        title = "Diversified Trend Sleeve"
     vt_txt = f' &nbsp;·&nbsp; vol-target {C["vol_target"]:.0%}' if C.get("vol_target") else ""
     sc = s.get("scale_now", 1.0)
     scale_line = (f'<p class="sub" style="margin-top:6px">Risk scale: <b>{sc*100:.0f}%</b> invested '
@@ -300,7 +300,8 @@ def main():
     td = dt.date.fromisoformat(args.track) if args.track else None
     ts = sd or td                                     # inception used to rebase the tracker
     s = st.current_state(capital=args.capital, start=args.start,
-                         track_start=ts.isoformat() if ts else None)
+                         track_start=ts.isoformat() if ts else None,
+                         live_data=True)
     with open(args.out, "w") as f:
         f.write(build_html(s, fresh=args.fresh, start_date=sd, track_date=td))
     print(f"Dashboard written to {args.out}  (open it in a browser)")

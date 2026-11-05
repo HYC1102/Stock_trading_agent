@@ -1,6 +1,6 @@
 """
 Live dashboard for the breakout / 3-slot swing strategy (separate from the
-40/40/20 portfolio dashboard). Drives off the forward paper-trading state in
+Diversified Trend Sleeve dashboard). Drives off the forward paper-trading state in
 paper_trade.py (data/paper_breakout.json) so it tracks a genuine forward record:
 
   * Today's actions  orders to place at the next open (exits + sentiment-ranked buys)
@@ -23,7 +23,7 @@ import yfinance as yf
 
 import breakout_sentiment as bs
 import paper_trade as pt
-import strategy as trend            # reuse its Tiingo price adapter
+import prices as px                 # Tiingo-first price adapter (local)
 
 CSS = """
 :root{--bg:#fbfbfa;--card:#fff;--ink:#1a1a19;--mut:#6b6a66;--line:#e6e4dd;
@@ -89,7 +89,7 @@ def overlay_tiingo(prices, P, names) -> list[str]:
     used = []
     for tk in names:
         try:
-            tg = trend._tiingo_prices(tk, start)
+            tg = px.tiingo_prices(tk, start)
         except Exception:  # noqa: BLE001
             tg = None
         if tg is None or tg.empty:
@@ -170,7 +170,7 @@ def build(capital: float, start: str):
     spy_line = []
     if started:
         try:
-            spy_full = trend.load_prices("SPY", st["start_date"])["Close"]
+            spy_full = px.load_prices("SPY", st["start_date"])["Close"]
             dates = pd.to_datetime([e["date"] for e in st["equity"]])
             spy_close = spy_full.reindex(spy_full.index.union(dates)).ffill().reindex(dates)
             if spy_close.notna().all() and spy_close.iloc[0] > 0:

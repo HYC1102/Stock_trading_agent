@@ -5,10 +5,10 @@ account once per trading day, commits the updated log back to the repo, and
 publishes the dashboards to GitHub Pages — no server to run.
 
 ## What it does each run
-1. Checks out the repo (including the latest `data/paper_breakout.json`).
-2. Runs `breakout_dashboard.py` → advances the paper account, logs any trades
+1. Checks out the repo (including the latest `ATR breakout strategy/data/paper_breakout.json`).
+2. Runs `breakout_dashboard.py` from inside `ATR breakout strategy/` → advances the paper account, logs any trades
    (with the momentum + news sentiment captured at entry) and daily equity.
-3. Commits `data/paper_breakout.json`, `paper_trades.csv`, `paper_equity.csv`
+3. Commits `ATR breakout strategy/data/paper_breakout.json`, `paper_trades.csv`, `paper_equity.csv`
    back to the repo (so the forward record persists and is auditable in git).
 4. Publishes `index.html` + both dashboards to GitHub Pages.
 
@@ -38,4 +38,4 @@ publishes the dashboards to GitHub Pages — no server to run.
   Claude-API sentiment later, add `ANTHROPIC_API_KEY` as a repo secret and read it
   in `sentiment_score()`.
 - The account **start date and $8,800 capital are frozen** in the committed
-  `data/paper_breakout.json`; delete that file to restart the forward test.
+  `ATR breakout strategy/data/paper_breakout.json`; delete that file to restart the forward test.

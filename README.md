@@ -7,17 +7,17 @@ total-return data (dividends and coupons included).
 
 | # | Strategy | File | Dashboard |
 |---|---|---|---|
-| 1 | **Diversified Trend sleeve** | `strategy.py` | `dashboard.py` → `dashboard.html` |
-| 2 | **Breakout momentum (3-slot swing)** | `breakout_sentiment.py` + `paper_trade.py` | `breakout_dashboard.py` → `breakout_dashboard.html` |
+| 1 | **Diversified Trend Sleeve** | `strategy.py` | `dashboard.py` → `dashboard.html` |
+| 2 | **ATR breakout momentum (slot swing)** | [`ATR breakout strategy/`](ATR%20breakout%20strategy/) — its own self-contained folder | `breakout_dashboard.py` → `breakout_dashboard.html` |
 
 `index.html` tabs between the two. A daily GitHub Actions workflow regenerates and
 publishes both to Pages (see [DEPLOY.md](DEPLOY.md)).
 
 ---
 
-## 1 · Diversified Trend sleeve  *(the core strategy)*
+## 1 · Diversified Trend Sleeve  *(the core strategy)*
 
-Managed-futures-style trend-following across **18 asset-class ETFs**, inverse-vol
+Managed-futures-style trend-following across **21 asset-class ETFs**, inverse-vol
 sized, holding only the assets currently in an uptrend:
 
 - **Signal** — 50-day Donchian breakout (long above the N-day high, flat below the
@@ -35,19 +35,28 @@ its edge held up in walk-forward. It gives up bull-market upside for a smoother,
 diversifying, crisis-resilient return stream — a genuine diversifier, not a
 market-beater.
 
-The strategy is configurable (`CONFIG` in `strategy.py`): the shipped default is
-**100% trend** (`trend_w=1.0`), but it also supports a fixed bond sleeve or a
-vol-targeted QQQ core. Adding a fixed 1/3 bonds was tested and *did not* improve
-risk-adjusted returns out-of-sample (and hurt in 2022) — the trend sleeve already
-holds bonds/credit dynamically when they trend, so the default is bond-free.
+The live Strategy v1.0 definition is **100% trend** (`trend_w=1.0`), with no
+permanent QQQ core and no permanent bond allocation. Bonds and credit can still
+be held dynamically when their own trend signals are active; unused exposure
+remains in cash. Strategy v1.0 has no separate portfolio-volatility overlay;
+the 60-day volatility estimate is used only to size individual ETF entries.
 
-**Universe (18 ETFs):** equities (SPY, QQQ, IWM, EFA, EEM) · bonds (TLT, IEF) ·
-credit (LQD, HYG) · commodities/metals (DBC, GLD, SLV, USO) · dollar (UUP) ·
-REITs (VNQ) · sectors (SOXX, XLK, XLE).
+Live dashboard decisions use **Tiingo only**, cached once per completed market
+session. If Tiingo is unavailable, rate-limited, stale, or incomplete, generation
+fails closed: the last successful dashboard remains published and no new order is
+issued. The yfinance fallback is restricted to research/backtest runs.
+
+**Universe (21 ETFs):** equities (SPY, QQQ, IWM, EFA, EEM, FXI) · bonds
+(TLT, IEF) · credit (LQD, HYG) · commodities/metals (DBC, GLD, SLV, USO) ·
+dollar (UUP) · REITs (VNQ) · sectors/themes (SOXX, XLK, XLE, XBI, BOTZ).
 
 ---
 
-## 2 · Breakout momentum  *(high-octane satellite / paper-trade)*
+## 2 · ATR breakout momentum  *(high-octane satellite / paper-trade)*
+
+Lives entirely in **[`ATR breakout strategy/`](ATR%20breakout%20strategy/)** — code,
+data and its own README. It shares no modules with the trend sleeve; run its
+commands from inside that folder.
 
 A 3-slot swing trader on the most liquid US stocks: each day, scan the **top-223
 by dollar volume** (rebuilt weekly) for 20-day breakouts, **rank by momentum +
@@ -55,8 +64,8 @@ real news sentiment** (yfinance headlines → VADER), hold the top 3 with a
 **1.5-ATR trailing stop + 10-day-low exit** and a **200-day SPY regime filter**.
 
 `paper_trade.py` runs it as a **persistent forward paper-trade** (state in
-`data/paper_breakout.json`, every trade + its sentiment logged to CSV), starting
-from a fixed date and advancing once per run.
+`ATR breakout strategy/data/paper_breakout.json`, every trade + its sentiment
+logged to CSV), starting from a fixed date and advancing once per run.
 
 ⚠️ **Honest caveats:** the backtest is **survivorship-biased** (today's index
 members only) and **regime-dependent** — impressive in momentum regimes, weaker
@@ -77,6 +86,8 @@ pip install -r requirements.txt
 ```bash
 python strategy.py --capital 13500                     # trend book, trades, exposure
 python dashboard.py --fresh --capital 13500            # -> dashboard.html (trend sleeve)
+
+cd "ATR breakout strategy"                             # the breakout strategy is self-contained
 python breakout_dashboard.py --capital 8800            # -> breakout_dashboard.html
 ```
 

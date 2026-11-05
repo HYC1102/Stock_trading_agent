@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 import pandas as pd
 
@@ -67,6 +68,18 @@ class ExecutedPositionPnlTests(unittest.TestCase):
         self.assertAlmostEqual(pnl["ETF"]["shares"], 2_000 / 12)
         self.assertAlmostEqual(pnl["ETF"]["avg_cost"], 10.8)
         self.assertAlmostEqual(pnl["ETF"]["gain_dollar"], (2_000 / 12) * (13 - 10.8))
+
+
+class LiveDataPolicyTests(unittest.TestCase):
+    @mock.patch("strategy.load_live_prices")
+    @mock.patch("strategy.yf.download")
+    def test_live_prices_never_fall_back_to_yfinance(self, yf_download, live_prices):
+        live_prices.side_effect = RuntimeError("Tiingo rate limit")
+
+        with self.assertRaisesRegex(RuntimeError, "Tiingo rate limit"):
+            strategy.load_prices("XLE", "2026-01-01", live=True)
+
+        yf_download.assert_not_called()
 
 
 if __name__ == "__main__":

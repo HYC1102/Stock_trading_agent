@@ -1,9 +1,9 @@
 """
-40/40/20 diversified portfolio strategy.
+Diversified Trend Sleeve.
 
-  * 40%  QQQ                 — US growth engine (held plain, no vol overlay)
-  * 40%  diversified trend   — managed-futures across 18 asset-class ETFs
-  * 20%  bonds (IEF)         — ballast
+The live strategy is 100% trend-following across a diversified ETF universe.
+There is no permanent equity core or bond allocation; unused exposure remains
+in cash.
 
 Rebalanced with a 15% no-trade band: a position is only traded when its weight
 has drifted more than 15% from target (plus trend entries/exits always execute).
@@ -62,10 +62,9 @@ CONFIG = dict(
     # trend-sleeve entry signal: "donchian" (N-day channel) or "atr" (Keltner-style
     # ATR breakout, reconstruction of the RAAM paper's ATR Trend/Breakout System).
     signal="donchian", atr_period=42, atr_mult=2.0,
-    # portfolio volatility targeting (ON): trim total exposure when the book's own
-    # trailing vol runs above vol_target. cap=1.0 -> de-risk only, never levers.
-    # Robustly lifts OOS Sharpe (~0.84->0.90) and halves drawdown. None -> off.
-    vol_target=0.11, vol_target_window=60, vol_target_cap=1.0, vol_target_band=0.10,
+    # Strategy v1.0 has no portfolio-level volatility overlay. Individual ETF
+    # entries remain inverse-volatility sized; unused exposure remains in cash.
+    vol_target=None, vol_target_window=60, vol_target_cap=1.0, vol_target_band=0.10,
     # vol-targeted QQQ core: hold qqq_w x min(1, target/realized_vol); trimmed
     # part goes to cash. target_vol=None -> flat qqq_w (no scaling).
     # (qqq_w=0 -> no separate QQQ core; QQQ can still be held via the trend sleeve.)
@@ -90,11 +89,14 @@ def _tiingo_token() -> str | None:
     return None
 
 
-def _tiingo_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFrame | None:
+def _tiingo_prices(ticker: str, start: str, end: str | None = None,
+                   strict: bool = False) -> pd.DataFrame | None:
     """Split/dividend-adjusted daily OHLC from Tiingo, or None if unavailable
     (no token, bad response, or error) so the caller can fall back to yfinance."""
     tok = _tiingo_token()
     if not tok:
+        if strict:
+            raise RuntimeError("Tiingo API token is not configured")
         return None
     import requests
     params = {"startDate": start, "token": tok, "format": "json"}
@@ -104,28 +106,89 @@ def _tiingo_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFr
         r = requests.get(f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
                          params=params, timeout=30)
         if r.status_code != 200:
+            if strict:
+                detail = ""
+                try:
+                    detail = str(r.json().get("detail", ""))
+                except Exception:  # noqa: BLE001
+                    pass
+                suffix = f": {detail}" if detail else ""
+                raise RuntimeError(f"Tiingo returned HTTP {r.status_code}{suffix}")
             return None
         rows = r.json()
         if not rows:
+            if strict:
+                raise RuntimeError(f"Tiingo returned no price history for {ticker}")
             return None
         df = pd.DataFrame(rows)
         df.index = pd.to_datetime(df["date"], utc=True).dt.tz_localize(None).dt.normalize()
         out = pd.DataFrame({"Open": df["adjOpen"], "High": df["adjHigh"],
                             "Low": df["adjLow"], "Close": df["adjClose"]}, index=df.index)
         return out.sort_index().dropna()
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        if strict:
+            if isinstance(exc, RuntimeError):
+                raise
+            raise RuntimeError(f"Tiingo request failed for {ticker}: {exc}") from exc
         return None
 
 
 PRICE_SOURCE: dict[str, str] = {}   # ticker -> "Tiingo" | "yfinance", from the most recent load
 
 
-def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 3) -> pd.DataFrame:
-    # Primary: Tiingo (a real API contract -- reliable, no stale-response lottery).
-    tg = _tiingo_prices(ticker, start, end)
-    if tg is not None and not tg.empty:
+def _live_cache_path(ticker: str) -> str:
+    return os.path.join("data", f"tiingo_live_{ticker}.pkl")
+
+
+def load_live_prices(ticker: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """Tiingo-only prices for live decisions, cached by latest session.
+
+    The cache prevents repeated dashboard builds from consuming the API quota.
+    A stale cache is never used to generate a new live order: if Tiingo cannot
+    refresh it through the expected session, the dashboard build fails closed.
+    """
+    expected = _expected_last_session() if end is None else None
+    cache_path = _live_cache_path(ticker)
+    if os.path.exists(cache_path):
+        try:
+            cached = pd.read_pickle(cache_path)
+            latest = cached.index[-1].date() if not cached.empty else None
+            if expected is None or (latest and latest >= expected):
+                PRICE_SOURCE[ticker] = "Tiingo (cached)"
+                window = cached.loc[pd.Timestamp(start):]
+                return window if end is None else window.loc[:pd.Timestamp(end)]
+        except Exception:  # noqa: BLE001
+            pass
+
+    fresh = _tiingo_prices(ticker, start, end, strict=True)
+    if fresh is None or fresh.empty:                           # strict mode should raise first
+        raise RuntimeError(f"Tiingo returned no live data for {ticker}")
+    latest = fresh.index[-1].date()
+    if expected is not None and latest < expected:
+        raise RuntimeError(
+            f"Tiingo data for {ticker} is stale ({latest}; expected {expected})")
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    fresh.to_pickle(cache_path)
+    PRICE_SOURCE[ticker] = "Tiingo"
+    return fresh
+
+
+def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 3,
+                live: bool = False, provider: str = "auto") -> pd.DataFrame:
+    if live:
+        return load_live_prices(ticker, start, end)
+    if provider not in ("auto", "tiingo", "yfinance"):
+        raise ValueError(f"Unknown data provider: {provider}")
+    if provider == "tiingo":
+        prices = _tiingo_prices(ticker, start, end, strict=True)
         PRICE_SOURCE[ticker] = "Tiingo"
-        return tg
+        return prices
+    # Primary: Tiingo (a real API contract -- reliable, no stale-response lottery).
+    if provider == "auto":
+        tg = _tiingo_prices(ticker, start, end)
+        if tg is not None and not tg.empty:
+            PRICE_SOURCE[ticker] = "Tiingo"
+            return tg
     # Fallback: yfinance (free but flaky; keeps working with no Tiingo token).
     last = None
     for attempt in range(retries):
@@ -142,7 +205,8 @@ def load_prices(ticker: str, start: str, end: str | None = None, retries: int = 
     raise ValueError(f"No data for {ticker!r} after {retries} tries ({last})")
 
 
-def build_panels(start: str, end: str | None = None, include_open: bool = False):
+def build_panels(start: str, end: str | None = None, include_open: bool = False,
+                 live: bool = False):
     """Return aligned signal, next-open-return, trailing-vol and close frames.
 
     When ``include_open`` is true, also return the adjusted-open frame.  The
@@ -160,8 +224,11 @@ def build_panels(start: str, end: str | None = None, include_open: bool = False)
         PRICE_SOURCE.clear()
         for t in UNIVERSE:
             try:
-                raw = load_prices(t, start, end)
+                raw = load_prices(t, start, end, live=live)
             except Exception as exc:  # noqa: BLE001
+                if live:
+                    raise RuntimeError(
+                        f"Live dashboard aborted: no valid Tiingo data for {t} ({exc})") from exc
                 print(f"  ! {t}: skipped ({exc})")
                 continue
             sig[t] = entry_signal(raw)
@@ -444,7 +511,8 @@ def _executed_position_pnl(NET: pd.DataFrame, OPEN: pd.DataFrame,
     return out
 
 
-def current_state(capital=23_000.0, start=None, end=None, track_start=None):
+def current_state(capital=23_000.0, start=None, end=None, track_start=None,
+                  live_data=False):
     """Everything the dashboard needs: target book, latest trades, exposure.
 
     ``track_start`` — if given, the chart is a live account tracker from that
@@ -453,7 +521,8 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     single anchor point at ``capital`` that fills in as you re-run it.
     """
     start = start or CONFIG["start"]
-    SIG, OR, AV, CLOSE, OPEN = build_panels(start, end, include_open=True)
+    SIG, OR, AV, CLOSE, OPEN = build_panels(
+        start, end, include_open=True, live=live_data)
     NET = net_targets(SIG, OR, AV)
     res = backtest(NET, OR, capital=capital)
     eq = res["equity"]; last = NET.index[-1]
@@ -501,7 +570,7 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
     # SPY correlation + equity chart data (strategy vs SPY, rebased to capital)
     corr = np.nan; chart = None; cur_value = float(eq.iloc[-1])
     try:
-        spy_r = load_prices("SPY", start, end)["Open"].pct_change().shift(-1).reindex(eq.index)
+        spy_r = OR["SPY"].reindex(eq.index)
         corr = pd.DataFrame({"p": eq.pct_change(), "s": spy_r}).dropna().corr().iloc[0, 1]
         spy_eq = capital * (1 + spy_r.fillna(0)).cumprod()
 
@@ -516,7 +585,7 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
             cret = CLOSE.pct_change()
             book_r = (NET.reindex(CLOSE.index).shift(1) * cret).sum(axis=1, min_count=1)
             beq = (1 + book_r.fillna(0.0)).cumprod()
-            spy_eq = load_prices("SPY", start, end)["Close"].reindex(CLOSE.index).ffill()
+            spy_eq = CLOSE["SPY"].reindex(CLOSE.index).ffill()
             w = beq[beq.index >= ts]; sw = spy_eq[spy_eq.index >= ts]
             if len(w):
                 strat_v = capital * w / w.iloc[0]
@@ -565,14 +634,14 @@ def current_state(capital=23_000.0, start=None, end=None, track_start=None):
 # CLI summary
 # --------------------------------------------------------------------------- #
 def main():
-    p = argparse.ArgumentParser(description="40/40/20 diversified strategy.")
+    p = argparse.ArgumentParser(description="Diversified Trend Sleeve strategy.")
     p.add_argument("--capital", type=float, default=23_000.0)
     p.add_argument("--start", default=CONFIG["start"])
     args = p.parse_args()
 
     s = current_state(capital=args.capital, start=args.start)
     m = s["metrics"]
-    print(f"\n40/40/20 strategy — as of {s['asof'].date()}  (${args.capital:,.0f})")
+    print(f"\nDiversified Trend Sleeve — as of {s['asof'].date()}  (${args.capital:,.0f})")
     print("=" * 56)
     print(f"  CAGR {m['cagr']*100:.1f}%   Sharpe {m['sharpe']:.2f}   "
           f"MaxDD {m['maxdd']*100:.1f}%   corr(SPY) {s['corr_spy']:.2f}")

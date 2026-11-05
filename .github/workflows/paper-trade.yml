@@ -30,7 +30,7 @@ jobs:
   run:
     runs-on: ubuntu-latest
     env:
-      TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}   # trend data source (falls back to yfinance if unset)
+      TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}   # required for trend live orders; no fallback
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +42,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Resolve completed market session
+        id: trend-session
+        run: echo "date=$(python -c 'import strategy; print(strategy._expected_last_session())')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the session's Tiingo trend data
+        uses: actions/cache@v4
+        with:
+          path: data/tiingo_live_*.pkl
+          key: tiingo-live-${{ runner.os }}-${{ steps.trend-session.outputs.date }}
+
       # yfinance rate-limits cloud IPs intermittently; retry so a transient
       # failure never leaves a dashboard frozen on a prior day. Steps always
       # exit 0 -- if generation still fails, Pages just keeps the last-good copy.
@@ -49,7 +59,7 @@ jobs:
         run: |
           ok=""
           for i in 1 2 3; do
-            if python breakout_dashboard.py --capital 8800; then ok=1; break; fi
+            if (cd "ATR breakout strategy" && python breakout_dashboard.py --capital 8800); then ok=1; break; fi
             echo "breakout attempt $i failed; retrying in 45s"; sleep 45
           done
           [ -n "$ok" ] || echo "breakout dashboard failed after 3 tries (keeping last-good)"
@@ -61,16 +71,20 @@ jobs:
             if python dashboard.py --track 2026-07-28 --capital 13500; then ok=1; break; fi
             echo "trend attempt $i failed; retrying in 45s"; sleep 45
           done
-          [ -n "$ok" ] || echo "trend dashboard failed after 3 tries (keeping last-good)"
+          if [ -z "$ok" ]; then
+            echo "trend dashboard failed after 3 tries; aborting publish so the last-good dashboard remains live"
+            exit 1
+          fi
 
       - name: Commit the forward-test log
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for f in data/paper_breakout.json data/paper_trades.csv data/paper_equity.csv; do
+          brk="ATR breakout strategy/data"
+          for f in "$brk/paper_breakout.json" "$brk/paper_trades.csv" "$brk/paper_equity.csv"; do
             [ -f "$f" ] && git add "$f"
           done
-          git add data/extras_*.json 2>/dev/null || true   # weekly discovered universe (persists the cache)
+          git add "$brk"/extras_*.json 2>/dev/null || true   # weekly discovered universe (persists the cache)
           if git diff --cached --quiet; then
             echo "No paper-state changes to commit."
           else
@@ -81,8 +95,8 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p _site
-          for f in index.html dashboard.html breakout_dashboard.html; do
-            [ -f "$f" ] && cp "$f" _site/
+          for f in index.html dashboard.html "ATR breakout strategy/breakout_dashboard.html"; do
+            if [ -f "$f" ]; then cp "$f" _site/; else echo "skipping missing $f"; fi
           done
 
       - uses: actions/upload-pages-artifact@v3

@@ -11,6 +11,7 @@ basket30_results.csv
 # cached price data, but KEEP the forward paper-trade log (committed by CI)
 data/*.pkl
 data/cron.log
+ATR breakout strategy/data/*.pkl
 _site/
 dashboard.html
 breakout_dashboard.html
@@ -18,3 +19,5 @@ breakout_dashboard.html
 # Tiingo API token (never commit)
 .tiingo_token
 data/tiingo_token.txt
+ATR breakout strategy/.tiingo_token
+ATR breakout strategy/data/tiingo_token.txt
