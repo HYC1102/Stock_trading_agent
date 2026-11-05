@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1297.219252032207,
+  "cash": 1196.3986310241878,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -13,7 +13,7 @@
       "shares": 5.482102387131068,
       "entry": 252.01,
       "entry_date": "2026-10-23",
-      "hi": 263.05499267578125
+      "hi": 267.6499938964844
     },
     "GILD": {
       "shares": 8.0556619459171,
@@ -21,17 +21,17 @@
       "entry_date": "2026-11-02",
       "hi": 174.5500030517578
     },
-    "LNG": {
-      "shares": 4.309733468294127,
-      "entry": 317.48,
-      "entry_date": "2026-11-02",
-      "hi": 312.6449890136719
-    },
     "LLY": {
       "shares": 0.9597253233799167,
       "entry": 1399.63,
       "entry_date": "2026-11-03",
       "hi": 1428.6500244140625
+    },
+    "HCA": {
+      "shares": 2.646282756346441,
+      "entry": 515.08,
+      "entry_date": "2026-11-05",
+      "hi": 504.80499267578125
     }
   },
   "trades": [
@@ -646,6 +646,30 @@
       "momentum": 96.0,
       "sentiment": 50.0,
       "combined": 77.6
+    },
+    {
+      "date": "2026-11-05",
+      "side": "SELL",
+      "ticker": "LNG",
+      "shares": 4.31,
+      "price": 293.0,
+      "value": 1262.75,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-05",
+      "side": "BUY",
+      "ticker": "HCA",
+      "shares": 2.646,
+      "price": 515.08,
+      "value": 1363.05,
+      "reason": "breakout",
+      "momentum": 91.5,
+      "sentiment": 67.9,
+      "combined": 82.1
     }
   ],
   "equity": [
@@ -908,22 +932,12 @@
     {
       "date": "2026-11-04",
       "value": 6772.16
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "LNG",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "HCA",
-      "price_hint": 510.7,
-      "momentum": 91.5,
-      "sentiment": 67.9,
-      "combined": 82.1
+      "date": "2026-11-05",
+      "value": 6699.55
     }
   ],
-  "last_close": "2026-11-04"
+  "pending": [],
+  "last_close": "2026-11-05"
 }
