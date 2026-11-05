@@ -1,37 +1,37 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 0.0,
+  "cash": 1297.219252032207,
   "positions": {
-    "SNOW": {
-      "shares": 5.543481684462503,
-      "entry": 317.49,
-      "entry_date": "2026-08-05",
-      "hi": 337.38
+    "WBD": {
+      "shares": 51.34237758550513,
+      "entry": 30.85,
+      "entry_date": "2026-09-30",
+      "hi": 30.95
     },
-    "PATH": {
-      "shares": 124.03100775193799,
-      "entry": 14.19,
-      "entry_date": "2026-08-05",
-      "hi": 16.68
+    "ACN": {
+      "shares": 5.482102387131068,
+      "entry": 252.01,
+      "entry_date": "2026-10-23",
+      "hi": 263.05499267578125
     },
-    "PLTR": {
-      "shares": 10.864197530864198,
-      "entry": 162.0,
-      "entry_date": "2026-08-05",
-      "hi": 179.01
+    "GILD": {
+      "shares": 8.0556619459171,
+      "entry": 169.85,
+      "entry_date": "2026-11-02",
+      "hi": 174.5500030517578
     },
-    "BLK": {
-      "shares": 1.5443481352038777,
-      "entry": 1138.5,
-      "entry_date": "2026-08-05",
-      "hi": 1182.84
+    "LNG": {
+      "shares": 4.309733468294127,
+      "entry": 317.48,
+      "entry_date": "2026-11-02",
+      "hi": 312.6449890136719
     },
-    "MPC": {
-      "shares": 4.701111091191061,
-      "entry": 363.06,
-      "entry_date": "2026-08-18",
-      "hi": 366.21
+    "LLY": {
+      "shares": 0.9597253233799167,
+      "entry": 1399.63,
+      "entry_date": "2026-11-03",
+      "hi": 1428.6500244140625
     }
   },
   "trades": [
@@ -118,6 +118,534 @@
       "momentum": 100.0,
       "sentiment": 59.2,
       "combined": 83.7
+    },
+    {
+      "date": "2026-08-21",
+      "side": "SELL",
+      "ticker": "BLK",
+      "shares": 1.544,
+      "price": 1150.68,
+      "value": 1777.05,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-08-21",
+      "side": "BUY",
+      "ticker": "TMO",
+      "shares": 2.835,
+      "price": 626.48,
+      "value": 1776.34,
+      "reason": "breakout",
+      "momentum": 93.8,
+      "sentiment": 55.3,
+      "combined": 78.4
+    },
+    {
+      "date": "2026-08-26",
+      "side": "SELL",
+      "ticker": "SNOW",
+      "shares": 5.543,
+      "price": 309.44,
+      "value": 1715.37,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-08-26",
+      "side": "BUY",
+      "ticker": "MRNA",
+      "shares": 11.12,
+      "price": 154.2,
+      "value": 1714.69,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 54.8,
+      "combined": 81.9
+    },
+    {
+      "date": "2026-09-02",
+      "side": "SELL",
+      "ticker": "TMO",
+      "shares": 2.835,
+      "price": 601.63,
+      "value": 1705.88,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-02",
+      "side": "BUY",
+      "ticker": "PSX",
+      "shares": 6.818,
+      "price": 250.09,
+      "value": 1705.2,
+      "reason": "breakout",
+      "momentum": 62.5,
+      "sentiment": 55.0,
+      "combined": 59.5
+    },
+    {
+      "date": "2026-09-03",
+      "side": "SELL",
+      "ticker": "PLTR",
+      "shares": 10.864,
+      "price": 172.35,
+      "value": 1872.44,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-03",
+      "side": "BUY",
+      "ticker": "CRM",
+      "shares": 7.121,
+      "price": 261.98,
+      "value": 1865.48,
+      "reason": "breakout",
+      "momentum": 50.0,
+      "sentiment": 52.8,
+      "combined": 51.1
+    },
+    {
+      "date": "2026-09-08",
+      "side": "SELL",
+      "ticker": "PATH",
+      "shares": 124.031,
+      "price": 15.16,
+      "value": 1880.31,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-08",
+      "side": "BUY",
+      "ticker": "HOOD",
+      "shares": 14.312,
+      "price": 125.07,
+      "value": 1789.97,
+      "reason": "breakout",
+      "momentum": 80.0,
+      "sentiment": 53.8,
+      "combined": 69.5
+    },
+    {
+      "date": "2026-09-10",
+      "side": "SELL",
+      "ticker": "CRM",
+      "shares": 7.121,
+      "price": 245.35,
+      "value": 1747.06,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-10",
+      "side": "BUY",
+      "ticker": "VLO",
+      "shares": 4.398,
+      "price": 393.54,
+      "value": 1730.6,
+      "reason": "breakout",
+      "momentum": 80.0,
+      "sentiment": 59.0,
+      "combined": 71.6
+    },
+    {
+      "date": "2026-09-11",
+      "side": "SELL",
+      "ticker": "HOOD",
+      "shares": 14.312,
+      "price": 113.35,
+      "value": 1622.31,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-11",
+      "side": "BUY",
+      "ticker": "CVX",
+      "shares": 8.108,
+      "price": 212.02,
+      "value": 1719.14,
+      "reason": "breakout",
+      "momentum": 50.0,
+      "sentiment": 58.8,
+      "combined": 53.5
+    },
+    {
+      "date": "2026-09-22",
+      "side": "SELL",
+      "ticker": "CVX",
+      "shares": 8.108,
+      "price": 201.87,
+      "value": 1636.84,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-22",
+      "side": "BUY",
+      "ticker": "MSTR",
+      "shares": 9.853,
+      "price": 167.49,
+      "value": 1650.26,
+      "reason": "breakout",
+      "momentum": 70.0,
+      "sentiment": 58.0,
+      "combined": 65.2
+    },
+    {
+      "date": "2026-09-23",
+      "side": "SELL",
+      "ticker": "MPC",
+      "shares": 4.701,
+      "price": 393.05,
+      "value": 1847.77,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-23",
+      "side": "SELL",
+      "ticker": "PSX",
+      "shares": 6.818,
+      "price": 259.15,
+      "value": 1766.97,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-23",
+      "side": "SELL",
+      "ticker": "VLO",
+      "shares": 4.398,
+      "price": 380.43,
+      "value": 1672.94,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "OKTA",
+      "shares": 8.758,
+      "price": 202.75,
+      "value": 1775.77,
+      "reason": "breakout",
+      "momentum": 91.7,
+      "sentiment": 58.4,
+      "combined": 78.4
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "ILMN",
+      "shares": 6.997,
+      "price": 253.79,
+      "value": 1775.77,
+      "reason": "breakout",
+      "momentum": 75.0,
+      "sentiment": 54.2,
+      "combined": 66.7
+    },
+    {
+      "date": "2026-09-24",
+      "side": "BUY",
+      "ticker": "CRWD",
+      "shares": 6.624,
+      "price": 261.77,
+      "value": 1734.03,
+      "reason": "breakout",
+      "momentum": 66.7,
+      "sentiment": 59.7,
+      "combined": 63.9
+    },
+    {
+      "date": "2026-09-30",
+      "side": "SELL",
+      "ticker": "MSTR",
+      "shares": 9.853,
+      "price": 160.82,
+      "value": 1584.55,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-09-30",
+      "side": "BUY",
+      "ticker": "WBD",
+      "shares": 51.342,
+      "price": 30.85,
+      "value": 1583.91,
+      "reason": "breakout",
+      "momentum": 33.3,
+      "sentiment": 46.4,
+      "combined": 38.6
+    },
+    {
+      "date": "2026-10-08",
+      "side": "SELL",
+      "ticker": "ILMN",
+      "shares": 6.997,
+      "price": 264.34,
+      "value": 1849.59,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-08",
+      "side": "BUY",
+      "ticker": "HPE",
+      "shares": 21.812,
+      "price": 70.45,
+      "value": 1536.68,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "OKTA",
+      "shares": 8.758,
+      "price": 204.13,
+      "value": 1787.9,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "CRWD",
+      "shares": 6.624,
+      "price": 243.61,
+      "value": 1613.7,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "SELL",
+      "ticker": "HPE",
+      "shares": 21.812,
+      "price": 59.91,
+      "value": 1306.78,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "P",
+      "shares": 11.173,
+      "price": 134.74,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "MPC",
+      "shares": 3.128,
+      "price": 481.2,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 94.1,
+      "sentiment": 50.0,
+      "combined": 76.5
+    },
+    {
+      "date": "2026-10-15",
+      "side": "BUY",
+      "ticker": "VLO",
+      "shares": 3.298,
+      "price": 456.5,
+      "value": 1505.4,
+      "reason": "breakout",
+      "momentum": 88.2,
+      "sentiment": 50.0,
+      "combined": 72.9
+    },
+    {
+      "date": "2026-10-23",
+      "side": "SELL",
+      "ticker": "MRNA",
+      "shares": 11.12,
+      "price": 196.69,
+      "value": 2187.17,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-23",
+      "side": "BUY",
+      "ticker": "ACN",
+      "shares": 5.482,
+      "price": 252.01,
+      "value": 1381.54,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "date": "2026-10-26",
+      "side": "SELL",
+      "ticker": "VLO",
+      "shares": 3.298,
+      "price": 418.0,
+      "value": 1378.44,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-26",
+      "side": "BUY",
+      "ticker": "ZS",
+      "shares": 5.382,
+      "price": 255.42,
+      "value": 1374.57,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 50.0,
+      "combined": 80.0
+    },
+    {
+      "date": "2026-10-28",
+      "side": "SELL",
+      "ticker": "MPC",
+      "shares": 3.128,
+      "price": 438.97,
+      "value": 1373.28,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-10-28",
+      "side": "BUY",
+      "ticker": "COP",
+      "shares": 9.342,
+      "price": 148.79,
+      "value": 1389.96,
+      "reason": "breakout",
+      "momentum": 83.3,
+      "sentiment": 50.0,
+      "combined": 70.0
+    },
+    {
+      "date": "2026-11-02",
+      "side": "SELL",
+      "ticker": "P",
+      "shares": 11.173,
+      "price": 129.25,
+      "value": 1444.11,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-02",
+      "side": "SELL",
+      "ticker": "ZS",
+      "shares": 5.382,
+      "price": 238.72,
+      "value": 1284.69,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-02",
+      "side": "BUY",
+      "ticker": "GILD",
+      "shares": 8.056,
+      "price": 169.85,
+      "value": 1368.25,
+      "reason": "breakout",
+      "momentum": 95.7,
+      "sentiment": 50.0,
+      "combined": 77.4
+    },
+    {
+      "date": "2026-11-02",
+      "side": "BUY",
+      "ticker": "LNG",
+      "shares": 4.31,
+      "price": 317.48,
+      "value": 1368.25,
+      "reason": "breakout",
+      "momentum": 87.0,
+      "sentiment": 50.0,
+      "combined": 72.2
+    },
+    {
+      "date": "2026-11-03",
+      "side": "SELL",
+      "ticker": "COP",
+      "shares": 9.342,
+      "price": 145.18,
+      "value": 1356.24,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-03",
+      "side": "BUY",
+      "ticker": "LLY",
+      "shares": 0.96,
+      "price": 1399.63,
+      "value": 1343.26,
+      "reason": "breakout",
+      "momentum": 96.0,
+      "sentiment": 50.0,
+      "combined": 77.6
     }
   ],
   "equity": [
@@ -164,8 +692,238 @@
     {
       "date": "2026-08-19",
       "value": 9147.9
+    },
+    {
+      "date": "2026-08-20",
+      "value": 9097.59
+    },
+    {
+      "date": "2026-08-21",
+      "value": 9312.57
+    },
+    {
+      "date": "2026-08-24",
+      "value": 9242.42
+    },
+    {
+      "date": "2026-08-25",
+      "value": 9149.73
+    },
+    {
+      "date": "2026-08-26",
+      "value": 9171.27
+    },
+    {
+      "date": "2026-08-27",
+      "value": 9375.08
+    },
+    {
+      "date": "2026-08-28",
+      "value": 9307.55
+    },
+    {
+      "date": "2026-08-31",
+      "value": 9405.86
+    },
+    {
+      "date": "2026-09-01",
+      "value": 9428.93
+    },
+    {
+      "date": "2026-09-02",
+      "value": 9373.79
+    },
+    {
+      "date": "2026-09-03",
+      "value": 9413.74
+    },
+    {
+      "date": "2026-09-04",
+      "value": 8805.76
+    },
+    {
+      "date": "2026-09-08",
+      "value": 8853.12
+    },
+    {
+      "date": "2026-09-09",
+      "value": 8770.3
+    },
+    {
+      "date": "2026-09-10",
+      "value": 8611.02
+    },
+    {
+      "date": "2026-09-11",
+      "value": 8711.4
+    },
+    {
+      "date": "2026-09-14",
+      "value": 8666.12
+    },
+    {
+      "date": "2026-09-15",
+      "value": 8763.35
+    },
+    {
+      "date": "2026-09-16",
+      "value": 8784.1
+    },
+    {
+      "date": "2026-09-17",
+      "value": 9037.31
+    },
+    {
+      "date": "2026-09-18",
+      "value": 9142.78
+    },
+    {
+      "date": "2026-09-21",
+      "value": 8994.34
+    },
+    {
+      "date": "2026-09-22",
+      "value": 8941.68
+    },
+    {
+      "date": "2026-09-23",
+      "value": 9004.77
+    },
+    {
+      "date": "2026-09-24",
+      "value": 9069.94
+    },
+    {
+      "date": "2026-09-25",
+      "value": 9064.71
+    },
+    {
+      "date": "2026-09-28",
+      "value": 9132.59
+    },
+    {
+      "date": "2026-09-29",
+      "value": 9084.24
+    },
+    {
+      "date": "2026-09-30",
+      "value": 9253.25
+    },
+    {
+      "date": "2026-10-01",
+      "value": 9208.97
+    },
+    {
+      "date": "2026-10-02",
+      "value": 9244.32
+    },
+    {
+      "date": "2026-10-05",
+      "value": 9621.74
+    },
+    {
+      "date": "2026-10-06",
+      "value": 7798.6
+    },
+    {
+      "date": "2026-10-07",
+      "value": 7726.0
+    },
+    {
+      "date": "2026-10-08",
+      "value": 7721.36
+    },
+    {
+      "date": "2026-10-09",
+      "value": 8109.73
+    },
+    {
+      "date": "2026-10-12",
+      "value": 7954.13
+    },
+    {
+      "date": "2026-10-13",
+      "value": 7946.26
+    },
+    {
+      "date": "2026-10-14",
+      "value": 7750.26
+    },
+    {
+      "date": "2026-10-15",
+      "value": 7492.27
+    },
+    {
+      "date": "2026-10-16",
+      "value": 7207.42
+    },
+    {
+      "date": "2026-10-19",
+      "value": 7356.37
+    },
+    {
+      "date": "2026-10-20",
+      "value": 7288.15
+    },
+    {
+      "date": "2026-10-21",
+      "value": 7655.7
+    },
+    {
+      "date": "2026-10-22",
+      "value": 7287.56
+    },
+    {
+      "date": "2026-10-23",
+      "value": 6854.73
+    },
+    {
+      "date": "2026-10-26",
+      "value": 7007.5
+    },
+    {
+      "date": "2026-10-27",
+      "value": 6926.45
+    },
+    {
+      "date": "2026-10-28",
+      "value": 6993.56
+    },
+    {
+      "date": "2026-10-29",
+      "value": 6894.86
+    },
+    {
+      "date": "2026-10-30",
+      "value": 6800.4
+    },
+    {
+      "date": "2026-11-02",
+      "value": 6802.36
+    },
+    {
+      "date": "2026-11-03",
+      "value": 6760.53
+    },
+    {
+      "date": "2026-11-04",
+      "value": 6772.16
     }
   ],
-  "pending": [],
-  "last_close": "2026-08-19"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "LNG",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "HCA",
+      "price_hint": 510.7,
+      "momentum": 91.5,
+      "sentiment": 67.9,
+      "combined": 82.1
+    }
+  ],
+  "last_close": "2026-11-04"
 }
