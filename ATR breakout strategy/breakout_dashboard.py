@@ -94,6 +94,15 @@ def overlay_tiingo(prices, P, names) -> list[str]:
             tg = None
         if tg is None or tg.empty:
             continue
+        if tk not in prices:
+            # Held/pending name yfinance no longer returns (delisted, renamed,
+            # acquired): seed it from Tiingo so it can still be marked and
+            # stopped. Volume=0 keeps it out of the volume-ranked scan universe.
+            seed = tg[["Open", "High", "Low", "Close"]].reindex(idx).dropna(how="all")
+            seed["Volume"] = 0.0
+            prices[tk] = seed
+            for field in ("open", "close", "high", "low"):
+                P[field][tk] = np.nan
         for field, col in (("open", "Open"), ("close", "Close"),
                            ("high", "High"), ("low", "Low")):
             if tk in P[field].columns:
@@ -135,14 +144,14 @@ def build(capital: float, start: str):
     # positions with live stop + cushion
     positions = []
     for tk, p in st["positions"].items():
-        px = float(P["close"].loc[asof, tk])
+        last_px = float(P["close"].loc[asof, tk])
         stop, rule = pt.stop_level(p, tk, prices)
         last_dt = prices[tk]["Close"].last_valid_index()
         positions.append(dict(ticker=tk, shares=p["shares"], entry=p["entry"],
-                              entry_date=p["entry_date"], price=px, value=p["shares"] * px,
-                              pnl=p["shares"] * (px - p["entry"]),
-                              ret=px / p["entry"] - 1, stop=stop, stop_rule=rule,
-                              room=px / stop - 1 if stop > 0 else 0,
+                              entry_date=p["entry_date"], price=last_px, value=p["shares"] * last_px,
+                              pnl=p["shares"] * (last_px - p["entry"]),
+                              ret=last_px / p["entry"] - 1, stop=stop, stop_rule=rule,
+                              room=last_px / stop - 1 if stop > 0 else 0,
                               source="Tiingo" if tk in tiingo_names else "yfinance",
                               asof_date=last_dt.date() if last_dt is not None else None))
     positions.sort(key=lambda x: -x["value"])
