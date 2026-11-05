@@ -919,10 +919,10 @@
     {
       "side": "BUY",
       "ticker": "HCA",
-      "price_hint": 512.07,
-      "momentum": 91.1,
-      "sentiment": 67.5,
-      "combined": 81.7
+      "price_hint": 510.7,
+      "momentum": 91.5,
+      "sentiment": 67.9,
+      "combined": 82.1
     }
   ],
   "last_close": "2026-11-04"
