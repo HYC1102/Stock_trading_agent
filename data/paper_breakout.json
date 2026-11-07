@@ -950,11 +950,11 @@
     },
     {
       "side": "BUY",
-      "ticker": "SPOT",
-      "price_hint": 614.41,
+      "ticker": "APP",
+      "price_hint": 391.22,
       "momentum": 100.0,
-      "sentiment": 60.0,
-      "combined": 84.0
+      "sentiment": 52.4,
+      "combined": 81.0
     }
   ],
   "last_close": "2026-11-06"
