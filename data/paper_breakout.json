@@ -942,6 +942,20 @@
       "value": 6611.41
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "LLY",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "SPOT",
+      "price_hint": 614.41,
+      "momentum": 100.0,
+      "sentiment": 60.0,
+      "combined": 84.0
+    }
+  ],
   "last_close": "2026-11-06"
 }
