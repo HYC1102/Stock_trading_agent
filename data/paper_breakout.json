@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1196.3986310241878,
+  "cash": 1182.6505300573626,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -21,17 +21,17 @@
       "entry_date": "2026-11-02",
       "hi": 174.5500030517578
     },
-    "LLY": {
-      "shares": 0.9597253233799167,
-      "entry": 1399.63,
-      "entry_date": "2026-11-03",
-      "hi": 1428.6500244140625
-    },
     "HCA": {
       "shares": 2.646282756346441,
       "entry": 515.08,
       "entry_date": "2026-11-05",
-      "hi": 504.80499267578125
+      "hi": 504.89
+    },
+    "APP": {
+      "shares": 3.4139574758478535,
+      "entry": 387.71,
+      "entry_date": "2026-11-09",
+      "hi": 410.0
     }
   },
   "trades": [
@@ -670,6 +670,30 @@
       "momentum": 91.5,
       "sentiment": 67.9,
       "combined": 82.1
+    },
+    {
+      "date": "2026-11-09",
+      "side": "SELL",
+      "ticker": "LLY",
+      "shares": 0.96,
+      "price": 1365.39,
+      "value": 1310.4,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-09",
+      "side": "BUY",
+      "ticker": "APP",
+      "shares": 3.414,
+      "price": 387.71,
+      "value": 1323.63,
+      "reason": "breakout",
+      "momentum": 100.0,
+      "sentiment": 52.4,
+      "combined": 81.0
     }
   ],
   "equity": [
@@ -940,22 +964,12 @@
     {
       "date": "2026-11-06",
       "value": 6611.41
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "LLY",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "APP",
-      "price_hint": 391.22,
-      "momentum": 100.0,
-      "sentiment": 52.4,
-      "combined": 81.0
+      "date": "2026-11-09",
+      "value": 6676.92
     }
   ],
-  "last_close": "2026-11-06"
+  "pending": [],
+  "last_close": "2026-11-09"
 }

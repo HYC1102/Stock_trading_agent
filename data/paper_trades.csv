@@ -52,3 +52,5 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-11-03,BUY,LLY,0.96,1399.63,1343.26,breakout,96.0,50.0,77.6
 2026-11-05,SELL,LNG,4.31,293.0,1262.75,1.5-ATR trail,,,
 2026-11-05,BUY,HCA,2.646,515.08,1363.05,breakout,91.5,67.9,82.1
+2026-11-09,SELL,LLY,0.96,1365.39,1310.4,1.5-ATR trail,,,
+2026-11-09,BUY,APP,3.414,387.71,1323.63,breakout,100.0,52.4,81.0
