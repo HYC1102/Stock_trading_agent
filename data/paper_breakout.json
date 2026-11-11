@@ -972,8 +972,26 @@
     {
       "date": "2026-11-10",
       "value": 6612.86
+    },
+    {
+      "date": "2026-11-11",
+      "value": 6623.21
     }
   ],
-  "pending": [],
-  "last_close": "2026-11-10"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "ACN",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "BRK-B",
+      "price_hint": 579.66,
+      "momentum": 85.7,
+      "sentiment": 49.1,
+      "combined": 71.1
+    }
+  ],
+  "last_close": "2026-11-11"
 }
