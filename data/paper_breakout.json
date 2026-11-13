@@ -1,19 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1182.6505300573626,
+  "cash": 1242.2435691970604,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
       "entry": 30.85,
       "entry_date": "2026-09-30",
       "hi": 30.95
-    },
-    "ACN": {
-      "shares": 5.482102387131068,
-      "entry": 252.01,
-      "entry_date": "2026-10-23",
-      "hi": 267.6499938964844
     },
     "GILD": {
       "shares": 8.0556619459171,
@@ -32,6 +26,12 @@
       "entry": 387.71,
       "entry_date": "2026-11-09",
       "hi": 410.0
+    },
+    "REGN": {
+      "shares": 1.3870066475907337,
+      "entry": 952.47,
+      "entry_date": "2026-11-13",
+      "hi": 954.3599853515625
     }
   },
   "trades": [
@@ -694,6 +694,30 @@
       "momentum": 100.0,
       "sentiment": 52.4,
       "combined": 81.0
+    },
+    {
+      "date": "2026-11-13",
+      "side": "SELL",
+      "ticker": "ACN",
+      "shares": 5.482,
+      "price": 251.95,
+      "value": 1381.22,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-13",
+      "side": "BUY",
+      "ticker": "REGN",
+      "shares": 1.387,
+      "price": 952.47,
+      "value": 1321.08,
+      "reason": "breakout",
+      "momentum": 85.7,
+      "sentiment": 55.0,
+      "combined": 73.4
     }
   ],
   "equity": [
@@ -980,22 +1004,12 @@
     {
       "date": "2026-11-12",
       "value": 6663.75
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "ACN",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "REGN",
-      "price_hint": 951.19,
-      "momentum": 85.7,
-      "sentiment": 55.0,
-      "combined": 73.4
+      "date": "2026-11-13",
+      "value": 6629.68
     }
   ],
-  "last_close": "2026-11-12"
+  "pending": [],
+  "last_close": "2026-11-13"
 }
