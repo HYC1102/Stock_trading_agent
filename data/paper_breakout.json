@@ -19,13 +19,13 @@
       "shares": 2.646282756346441,
       "entry": 515.08,
       "entry_date": "2026-11-05",
-      "hi": 507.760009765625
+      "hi": 511.78
     },
     "APP": {
       "shares": 3.4139574758478535,
       "entry": 387.71,
       "entry_date": "2026-11-09",
-      "hi": 410.0
+      "hi": 415.22
     },
     "REGN": {
       "shares": 1.3870066475907337,
@@ -1008,8 +1008,26 @@
     {
       "date": "2026-11-13",
       "value": 6629.68
+    },
+    {
+      "date": "2026-11-16",
+      "value": 6685.05
     }
   ],
-  "pending": [],
-  "last_close": "2026-11-13"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "GILD",
+      "reason": "1.5-ATR trail"
+    },
+    {
+      "side": "BUY",
+      "ticker": "MCK",
+      "price_hint": 1105.04,
+      "momentum": 85.7,
+      "sentiment": 55.7,
+      "combined": 73.7
+    }
+  ],
+  "last_close": "2026-11-16"
 }
