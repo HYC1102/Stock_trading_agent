@@ -1,19 +1,13 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 1250.8116006808875,
+  "cash": 1206.2059184124819,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
       "entry": 30.85,
       "entry_date": "2026-09-30",
       "hi": 30.95
-    },
-    "HCA": {
-      "shares": 2.646282756346441,
-      "entry": 515.08,
-      "entry_date": "2026-11-05",
-      "hi": 511.78
     },
     "APP": {
       "shares": 3.4139574758478535,
@@ -32,6 +26,12 @@
       "entry": 1092.86,
       "entry_date": "2026-11-17",
       "hi": 1092.18994140625
+    },
+    "COST": {
+      "shares": 1.1898635922944774,
+      "entry": 1089.0,
+      "entry_date": "2026-11-19",
+      "hi": 1091.8900146484375
     }
   },
   "trades": [
@@ -742,6 +742,30 @@
       "momentum": 85.7,
       "sentiment": 55.7,
       "combined": 73.7
+    },
+    {
+      "date": "2026-11-19",
+      "side": "SELL",
+      "ticker": "HCA",
+      "shares": 2.646,
+      "price": 472.99,
+      "value": 1251.67,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
+    },
+    {
+      "date": "2026-11-19",
+      "side": "BUY",
+      "ticker": "COST",
+      "shares": 1.19,
+      "price": 1089.0,
+      "value": 1295.76,
+      "reason": "breakout",
+      "momentum": 66.7,
+      "sentiment": 57.0,
+      "combined": 62.8
     }
   ],
   "equity": [
@@ -1044,22 +1068,12 @@
     {
       "date": "2026-11-18",
       "value": 6525.9
-    }
-  ],
-  "pending": [
-    {
-      "side": "SELL",
-      "ticker": "HCA",
-      "reason": "1.5-ATR trail"
     },
     {
-      "side": "BUY",
-      "ticker": "COST",
-      "price_hint": 1096.62,
-      "momentum": 66.7,
-      "sentiment": 57.0,
-      "combined": 62.8
+      "date": "2026-11-19",
+      "value": 6403.46
     }
   ],
-  "last_close": "2026-11-18"
+  "pending": [],
+  "last_close": "2026-11-19"
 }
