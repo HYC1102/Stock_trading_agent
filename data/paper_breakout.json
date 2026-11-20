@@ -1074,6 +1074,12 @@
       "value": 6403.46
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "APP",
+      "reason": "1.5-ATR trail"
+    }
+  ],
   "last_close": "2026-11-19"
 }
