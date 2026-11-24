@@ -1082,8 +1082,18 @@
     {
       "date": "2026-11-20",
       "value": 6411.55
+    },
+    {
+      "date": "2026-11-23",
+      "value": 6371.09
     }
   ],
-  "pending": [],
-  "last_close": "2026-11-20"
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "MCK",
+      "reason": "1.5-ATR trail"
+    }
+  ],
+  "last_close": "2026-11-23"
 }
