@@ -61,3 +61,4 @@ date,side,ticker,shares,price,value,reason,momentum,sentiment,combined
 2026-11-19,SELL,HCA,2.646,472.99,1251.67,1.5-ATR trail,,,
 2026-11-19,BUY,COST,1.19,1089.0,1295.76,breakout,66.7,57.0,62.8
 2026-11-20,SELL,APP,3.414,374.0,1276.82,1.5-ATR trail,,,
+2026-11-24,SELL,MCK,1.216,1049.55,1276.43,1.5-ATR trail,,,
