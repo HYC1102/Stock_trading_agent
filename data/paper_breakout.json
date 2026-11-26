@@ -1102,6 +1102,12 @@
       "value": 6415.6
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "side": "SELL",
+      "ticker": "COST",
+      "reason": "1.5-ATR trail"
+    }
+  ],
   "last_close": "2026-11-25"
 }
