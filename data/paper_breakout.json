@@ -1,7 +1,7 @@
 {
   "start_date": "2026-08-05",
   "capital": 8800.0,
-  "cash": 3758.94808815876,
+  "cash": 5050.923188576034,
   "positions": {
     "WBD": {
       "shares": 51.34237758550513,
@@ -13,13 +13,7 @@
       "shares": 1.3870066475907337,
       "entry": 952.47,
       "entry_date": "2026-11-13",
-      "hi": 983.260009765625
-    },
-    "COST": {
-      "shares": 1.1898635922944774,
-      "entry": 1089.0,
-      "entry_date": "2026-11-19",
-      "hi": 1114.635009765625
+      "hi": 992.1400146484375
     }
   },
   "trades": [
@@ -778,6 +772,18 @@
       "momentum": "",
       "sentiment": "",
       "combined": ""
+    },
+    {
+      "date": "2026-11-27",
+      "side": "SELL",
+      "ticker": "COST",
+      "shares": 1.19,
+      "price": 1086.04,
+      "value": 1292.23,
+      "reason": "1.5-ATR trail",
+      "momentum": "",
+      "sentiment": "",
+      "combined": ""
     }
   ],
   "equity": [
@@ -1100,14 +1106,12 @@
     {
       "date": "2026-11-25",
       "value": 6415.6
-    }
-  ],
-  "pending": [
+    },
     {
-      "side": "SELL",
-      "ticker": "COST",
-      "reason": "1.5-ATR trail"
+      "date": "2026-11-27",
+      "value": 6427.03
     }
   ],
-  "last_close": "2026-11-25"
+  "pending": [],
+  "last_close": "2026-11-27"
 }
